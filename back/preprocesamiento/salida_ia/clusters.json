@@ -1,0 +1,105 @@
+{
+  "algoritmo": "k-means",
+  "k": 5,
+  "variables": [
+    "edad",
+    "fc",
+    "fr",
+    "pam",
+    "temp_c",
+    "spo2"
+  ],
+  "criterio_k": "máximo local de silueta, estabilidad bootstrap (ARI) y grupos clínicamente distintos",
+  "grupos": [
+    {
+      "cluster": 0,
+      "nombre": "Adultos mayores estables",
+      "descripcion": "Signos normales; el riesgo viene de la edad y el motivo (zona de confusión entre crítico y medio)",
+      "reales": 2585,
+      "sinteticos": 56,
+      "pct_critico": 20.3,
+      "mediana": {
+        "edad": 69.0,
+        "fc": 76.0,
+        "fr": 18.0,
+        "pas": 131.0,
+        "pad": 73.0,
+        "temp_c": 36.6,
+        "spo2": 97.0,
+        "dolor_nrs": 3.0
+      }
+    },
+    {
+      "cluster": 1,
+      "nombre": "Taquicardia / febril",
+      "descripcion": "Frecuencia cardiaca alta y temperatura algo elevada en adultos (zona de confusión entre crítico y medio)",
+      "reales": 1347,
+      "sinteticos": 29,
+      "pct_critico": 24.4,
+      "mediana": {
+        "edad": 46.0,
+        "fc": 108.0,
+        "fr": 19.0,
+        "pas": 135.0,
+        "pad": 81.0,
+        "temp_c": 37.1,
+        "spo2": 97.0,
+        "dolor_nrs": 5.0
+      }
+    },
+    {
+      "cluster": 2,
+      "nombre": "Compromiso respiratorio",
+      "descripcion": "Hipoxemia y taquipnea; el grupo más grave",
+      "reales": 162,
+      "sinteticos": 10,
+      "pct_critico": 50.6,
+      "mediana": {
+        "edad": 57.5,
+        "fc": 104.0,
+        "fr": 32.0,
+        "pas": 130.0,
+        "pad": 87.5,
+        "temp_c": 36.8,
+        "spo2": 87.0,
+        "dolor_nrs": 6.0
+      }
+    },
+    {
+      "cluster": 3,
+      "nombre": "Hipertensión arterial",
+      "descripcion": "Presión arterial elevada sin otros signos de alarma (zona de confusión entre crítico y medio)",
+      "reales": 2028,
+      "sinteticos": 43,
+      "pct_critico": 20.6,
+      "mediana": {
+        "edad": 57.0,
+        "fc": 87.0,
+        "fr": 18.0,
+        "pas": 164.0,
+        "pad": 97.0,
+        "temp_c": 36.7,
+        "spo2": 98.0,
+        "dolor_nrs": 5.0
+      }
+    },
+    {
+      "cluster": 4,
+      "nombre": "Jóvenes con signos estables",
+      "descripcion": "El grupo más grande y menos grave; zona de confusión principal: el modelo subtriaja a sus pocos críticos",
+      "reales": 3182,
+      "sinteticos": 62,
+      "pct_critico": 11.2,
+      "mediana": {
+        "edad": 31.0,
+        "fc": 85.0,
+        "fr": 18.0,
+        "pas": 127.0,
+        "pad": 78.0,
+        "temp_c": 36.7,
+        "spo2": 99.0,
+        "dolor_nrs": 5.0
+      }
+    }
+  ]
+}

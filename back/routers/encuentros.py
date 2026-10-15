@@ -20,6 +20,11 @@ class TriageUpdate(BaseModel):
     nivel_triage:int=Field(ge=1,le=5)
     dolor_escala:int|None=Field(default=None,ge=0,le=10)
     observaciones_triage:str|None=None
+    # R10: si el nivel sale de una sugerencia de IA ACEPTADA, se envía el id del reporte
+    id_reporte_ia:int|None=None
+
+# Niveles que corresponden a cada categoría que propone la IA
+RANGO_CATEGORIA={"critico":(1,2),"medio":(3,3),"no_critico":(4,5)}
 
 @router.post("/encuentros",tags=["Encuentros"],status_code=201)
 def crear_encuentro(data:EncuentroCreate,db=Depends(get_db),u=Depends(requerir_roles("Admin","Medico"))):
@@ -145,6 +150,25 @@ def registrar_triage(id_encuentro:int,data:TriageUpdate,db=Depends(get_db),u=Dep
         if anterior["estado"]=="finalizado":
             raise HTTPException(status_code=409,detail="Encuentro finalizado")
 
+        # Clasificación asistida: el reporte debe ser de ESTE encuentro, estar aprobado
+        # y el nivel debe caer dentro de la categoría que el médico aceptó.
+        automatica=False
+        if data.id_reporte_ia is not None:
+            cur.execute("""
+                SELECT categoria,estado
+                FROM reportes_ia
+                WHERE id_reporte=%s AND id_encuentro=%s;
+            """,(data.id_reporte_ia,id_encuentro))
+            rep=cur.fetchone()
+            if not rep:
+                raise HTTPException(status_code=404,detail="Reporte de IA no encontrado para este encuentro")
+            if rep["estado"]!="aprobado":
+                raise HTTPException(status_code=409,detail="La sugerencia de IA no ha sido aceptada")
+            lo,hi=RANGO_CATEGORIA[rep["categoria"]]
+            if not lo<=data.nivel_triage<=hi:
+                raise HTTPException(status_code=422,detail=f"El nivel {data.nivel_triage} no corresponde a la categoría aceptada ({rep['categoria']}: niveles {lo}-{hi})")
+            automatica=True
+
         cur.execute("""
             UPDATE encuentros
             SET nivel_triage=%s,
@@ -152,6 +176,7 @@ def registrar_triage(id_encuentro:int,data:TriageUpdate,db=Depends(get_db),u=Dep
                 observaciones_triage=%s,
                 fecha_hora_triage=now(),
                 clasificado_por=%s,
+                clasificacion_automatica=%s,
                 medico_responsable=COALESCE(medico_responsable,%s),
                 estado='en_atencion',
                 updated_at=now()
@@ -161,6 +186,7 @@ def registrar_triage(id_encuentro:int,data:TriageUpdate,db=Depends(get_db),u=Dep
             data.nivel_triage,data.dolor_escala,
             data.observaciones_triage,
             u["numero_documento_usuario"],
+            automatica,
             u["numero_documento_usuario"],
             id_encuentro
         ))

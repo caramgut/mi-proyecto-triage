@@ -363,10 +363,22 @@ def historia_clinica(documento:int,db=Depends(get_db),u=Depends(requerir_roles("
 
             episodios.append(ep)
 
+            cur.execute("""
+            SELECT r.id_reporte AS id, r.id_encuentro, r.estado, r.categoria, r.p_critico,
+                   r.modelo_version, r.resultado, r.observaciones_clinico,
+                   r.revisado_por, r.revisado_at, r.created_at
+            FROM reportes_ia r
+            WHERE r.id_paciente=%s AND r.estado='aprobado'
+            ORDER BY r.revisado_at DESC;
+            """,(documento,))
+            reportes_ia=cur.fetchall()
+        
+
         return {
             "paciente":p,
             "antecedentes":antecedentes,
-            "encuentros":episodios
+            "encuentros":episodios,
+            "reportes_ia":reportes_ia
         }
 
     finally:

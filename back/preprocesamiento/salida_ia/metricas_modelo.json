@@ -1,0 +1,364 @@
+{
+  "modelo": "Regresión logística multinomial + 11 signos de alarma clínicos (scikit-learn)",
+  "categorias": {
+    "critico": "niveles 1-2",
+    "medio": "nivel 3",
+    "no_critico": "niveles 4-5"
+  },
+  "n_entrenamiento": 7443,
+  "n_prueba": 1861,
+  "regla": {
+    "U_CRITICO": 0.185,
+    "U_NO_CRITICO": 0.37,
+    "GUARDA": 0.1,
+    "U_ALERTA": 0.38,
+    "red_seguridad": "SpO2 < 88 % o PAS < 90 mmHg"
+  },
+  "comparacion_modelos_cv": {
+    "Regresión logística": {
+      "AUC_critico": {
+        "media": 0.784,
+        "desv": 0.013
+      },
+      "VPP_critico": {
+        "media": 0.384,
+        "desv": 0.02
+      },
+      "kappa_pond": {
+        "media": 0.437,
+        "desv": 0.018
+      },
+      "critico_como_no_critico": {
+        "media": 0.11,
+        "desv": 0.005
+      },
+      "sens_critica": {
+        "media": 0.703,
+        "desv": 0.029
+      },
+      "espec_critica": {
+        "media": 0.746,
+        "desv": 0.013
+      },
+      "f1_macro": {
+        "media": 0.532,
+        "desv": 0.012
+      }
+    },
+    "SVM (RBF)": {
+      "AUC_critico": {
+        "media": 0.776,
+        "desv": 0.013
+      },
+      "VPP_critico": {
+        "media": 0.379,
+        "desv": 0.017
+      },
+      "kappa_pond": {
+        "media": 0.438,
+        "desv": 0.018
+      },
+      "critico_como_no_critico": {
+        "media": 0.132,
+        "desv": 0.031
+      },
+      "sens_critica": {
+        "media": 0.704,
+        "desv": 0.016
+      },
+      "espec_critica": {
+        "media": 0.739,
+        "desv": 0.02
+      },
+      "f1_macro": {
+        "media": 0.523,
+        "desv": 0.012
+      }
+    },
+    "Regresión lineal": {
+      "AUC_critico": {
+        "media": 0.768,
+        "desv": 0.015
+      },
+      "VPP_critico": {
+        "media": 0.371,
+        "desv": 0.012
+      },
+      "kappa_pond": {
+        "media": 0.438,
+        "desv": 0.017
+      },
+      "critico_como_no_critico": {
+        "media": 0.088,
+        "desv": 0.006
+      },
+      "sens_critica": {
+        "media": 0.7,
+        "desv": 0.028
+      },
+      "espec_critica": {
+        "media": 0.734,
+        "desv": 0.007
+      },
+      "f1_macro": {
+        "media": 0.513,
+        "desv": 0.016
+      }
+    },
+    "Árbol de decisión": {
+      "AUC_critico": {
+        "media": 0.73,
+        "desv": 0.037
+      },
+      "VPP_critico": {
+        "media": 0.323,
+        "desv": 0.024
+      },
+      "kappa_pond": {
+        "media": 0.349,
+        "desv": 0.053
+      },
+      "critico_como_no_critico": {
+        "media": 0.187,
+        "desv": 0.029
+      },
+      "sens_critica": {
+        "media": 0.7,
+        "desv": 0.063
+      },
+      "espec_critica": {
+        "media": 0.67,
+        "desv": 0.019
+      },
+      "f1_macro": {
+        "media": 0.459,
+        "desv": 0.022
+      }
+    },
+    "KNN": {
+      "AUC_critico": {
+        "media": 0.729,
+        "desv": 0.008
+      },
+      "VPP_critico": {
+        "media": 0.288,
+        "desv": 0.004
+      },
+      "kappa_pond": {
+        "media": 0.315,
+        "desv": 0.023
+      },
+      "critico_como_no_critico": {
+        "media": 0.111,
+        "desv": 0.014
+      },
+      "sens_critica": {
+        "media": 0.748,
+        "desv": 0.021
+      },
+      "espec_critica": {
+        "media": 0.584,
+        "desv": 0.007
+      },
+      "f1_macro": {
+        "media": 0.452,
+        "desv": 0.011
+      }
+    }
+  },
+  "comparacion_modelos_prueba": {
+    "Regresión logística": {
+      "AUC crítico": 0.765,
+      "VPP crítico": 0.365,
+      "Kappa ponderado": 0.417,
+      "Subtriaje grave": 0.132,
+      "Sensibilidad crítica (fija)": 0.658
+    },
+    "SVM (RBF)": {
+      "AUC crítico": 0.766,
+      "VPP crítico": 0.366,
+      "Kappa ponderado": 0.433,
+      "Subtriaje grave": 0.164,
+      "Sensibilidad crítica (fija)": 0.673
+    },
+    "Regresión lineal": {
+      "AUC crítico": 0.743,
+      "VPP crítico": 0.352,
+      "Kappa ponderado": 0.418,
+      "Subtriaje grave": 0.099,
+      "Sensibilidad crítica (fija)": 0.646
+    },
+    "Árbol de decisión": {
+      "AUC crítico": 0.744,
+      "VPP crítico": 0.335,
+      "Kappa ponderado": 0.395,
+      "Subtriaje grave": 0.167,
+      "Sensibilidad crítica (fija)": 0.734
+    },
+    "KNN": {
+      "AUC crítico": 0.721,
+      "VPP crítico": 0.301,
+      "Kappa ponderado": 0.33,
+      "Subtriaje grave": 0.12,
+      "Sensibilidad crítica (fija)": 0.743
+    }
+  },
+  "tiempo_entrenamiento_s": {
+    "Regresión logística": 0.15,
+    "SVM (RBF)": 14.5,
+    "Regresión lineal": 0.09,
+    "Árbol de decisión": 0.05,
+    "KNN": 0.03
+  },
+  "prueba": {
+    "AUC_critico": {
+      "valor": 0.765,
+      "ic95": [
+        0.735,
+        0.794
+      ]
+    },
+    "kappa_pond": {
+      "valor": 0.409,
+      "ic95": [
+        0.371,
+        0.448
+      ]
+    },
+    "f1_macro": {
+      "valor": 0.517,
+      "ic95": [
+        0.494,
+        0.539
+      ]
+    },
+    "sens_critica": {
+      "valor": 0.658,
+      "ic95": [
+        0.606,
+        0.707
+      ]
+    },
+    "VPP_critico": {
+      "valor": 0.363,
+      "ic95": [
+        0.325,
+        0.402
+      ]
+    },
+    "sens_no_critico": {
+      "valor": 0.511,
+      "ic95": [
+        0.467,
+        0.553
+      ]
+    },
+    "critico_como_no_critico": {
+      "valor": 0.091,
+      "ic95": [
+        0.061,
+        0.12
+      ]
+    },
+    "alerta_sensibilidad": {
+      "valor": 0.371,
+      "ic95": [
+        0.32,
+        0.423
+      ]
+    },
+    "alerta_VPP": {
+      "valor": 0.502,
+      "ic95": [
+        0.437,
+        0.563
+      ]
+    },
+    "alerta_%_pacientes": {
+      "valor": 0.136,
+      "ic95": [
+        0.12,
+        0.152
+      ]
+    }
+  },
+  "sesgo": [
+    {
+      "variable": "fuente",
+      "grupo": "KTAS_Corea",
+      "n": 246,
+      "% críticos": 0.175,
+      "AUC_critico": 0.845,
+      "sens_critica": 0.791,
+      "espec_critica": 0.719,
+      "kappa": 0.496,
+      "critico_como_no_critico": 0.047
+    },
+    {
+      "variable": "fuente",
+      "grupo": "NHAMCS_EEUU_2022",
+      "n": 1615,
+      "% críticos": 0.185,
+      "AUC_critico": 0.754,
+      "sens_critica": 0.639,
+      "espec_critica": 0.743,
+      "kappa": 0.394,
+      "critico_como_no_critico": 0.097
+    },
+    {
+      "variable": "sexo",
+      "grupo": "F",
+      "n": 979,
+      "% críticos": 0.143,
+      "AUC_critico": 0.751,
+      "sens_critica": 0.643,
+      "espec_critica": 0.76,
+      "kappa": 0.368,
+      "critico_como_no_critico": 0.093
+    },
+    {
+      "variable": "sexo",
+      "grupo": "M",
+      "n": 882,
+      "% críticos": 0.229,
+      "AUC_critico": 0.766,
+      "sens_critica": 0.668,
+      "espec_critica": 0.715,
+      "kappa": 0.445,
+      "critico_como_no_critico": 0.089
+    },
+    {
+      "variable": "grupo_edad",
+      "grupo": "18-39",
+      "n": 683,
+      "% críticos": 0.129,
+      "AUC_critico": 0.75,
+      "sens_critica": 0.489,
+      "espec_critica": 0.857,
+      "kappa": 0.373,
+      "critico_como_no_critico": 0.205
+    },
+    {
+      "variable": "grupo_edad",
+      "grupo": "40-64",
+      "n": 672,
+      "% críticos": 0.186,
+      "AUC_critico": 0.756,
+      "sens_critica": 0.688,
+      "espec_critica": 0.739,
+      "kappa": 0.426,
+      "critico_como_no_critico": 0.064
+    },
+    {
+      "variable": "grupo_edad",
+      "grupo": "65+",
+      "n": 506,
+      "% críticos": 0.255,
+      "AUC_critico": 0.747,
+      "sens_critica": 0.744,
+      "espec_critica": 0.557,
+      "kappa": 0.276,
+      "critico_como_no_critico": 0.039
+    }
+  ]
+}

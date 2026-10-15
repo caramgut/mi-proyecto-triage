@@ -13,6 +13,8 @@ from auth.service import usuario_actual, usuario_desde_token
 from core.config import PG_CONNECTION_STRING
 from core.database import get_db
 from core.eventos import cerrar_conexion, registrar_conexion, serializar_notificacion
+from routers.alertas import contar_alertas_activas
+from routers.ia_reportes import contar_reportes_por_revisar
 
 router = APIRouter(tags=["Tiempo real y notificaciones"])
 
@@ -142,9 +144,9 @@ def trabajo_pendiente(db=Depends(get_db), usuario=Depends(usuario_actual)):
     rol = usuario["rol"]
 
     contadores = {
-        "reportes_por_revisar": 0,   # R10: se conecta cuando exista la tabla de reportes IA
+        "reportes_por_revisar": 0,   # R10: reportes de IA pendientes que el usuario puede aprobar
         "remisiones_recibidas": 0,
-        "alertas_activas": 0,        # R20: se conecta cuando exista la tabla de alertas
+        "alertas_activas": 0,        # R20: alertas críticas activas a su cargo (al admin: las escaladas)
         "notificaciones_no_leidas": 0,
     }
 
@@ -159,6 +161,10 @@ def trabajo_pendiente(db=Depends(get_db), usuario=Depends(usuario_actual)):
                   AND is_deleted = FALSE;
             """, (uid,))
             contadores["remisiones_recibidas"] = cur.fetchone()[0]
+
+        # Se calculan desde el estado real: bajan solos al aprobar/rechazar o al reconocer
+        contadores["reportes_por_revisar"] = contar_reportes_por_revisar(cur, usuario)
+        contadores["alertas_activas"] = contar_alertas_activas(cur, usuario)
 
         cur.execute("""
             SELECT count(*) FROM notificaciones

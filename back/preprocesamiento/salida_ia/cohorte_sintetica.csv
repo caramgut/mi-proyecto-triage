@@ -1,0 +1,201 @@
+id_sintetico,origen,cluster,grupo,fila_base,u,edad,fc,fr,pas,pad,temp_c,spo2,dolor_nrs,sexo,llegada_ambulancia,lesion,motivo_categoria,y_triaje
+SINT-0001,sintetico,0,Adultos mayores estables,1550,0.64,94.0,69.0,19.0,157.0,83.0,36.6,98.0,9.0,M,1.0,1.0,trauma,3
+SINT-0002,sintetico,0,Adultos mayores estables,524,0.371,83.0,66.0,22.0,142.0,68.0,36.9,96.0,3.0,M,0.0,1.0,trauma,3
+SINT-0003,sintetico,0,Adultos mayores estables,1073,0.791,69.0,66.0,20.0,150.0,77.0,37.3,96.0,,F,0.0,1.0,neurologico,3
+SINT-0004,sintetico,0,Adultos mayores estables,1222,0.177,67.0,92.0,18.0,93.0,54.0,36.9,99.0,2.0,M,1.0,0.0,cardiovascular,2
+SINT-0005,sintetico,0,Adultos mayores estables,1566,0.298,61.0,100.0,19.0,118.0,68.0,36.5,96.0,8.0,F,0.0,0.0,musculoesqueletico,4
+SINT-0006,sintetico,0,Adultos mayores estables,239,0.92,68.0,97.0,20.0,104.0,77.0,36.7,96.0,0.0,F,0.0,0.0,respiratorio,3
+SINT-0007,sintetico,0,Adultos mayores estables,401,0.753,76.0,74.0,18.0,147.0,80.0,36.2,96.0,0.0,F,0.0,0.0,otros,3
+SINT-0008,sintetico,0,Adultos mayores estables,192,0.826,57.0,90.0,18.0,132.0,73.0,36.5,99.0,6.0,M,0.0,0.0,respiratorio,3
+SINT-0009,sintetico,0,Adultos mayores estables,1099,0.339,53.0,67.0,,132.0,67.0,36.3,98.0,7.0,F,0.0,0.0,cardiovascular,2
+SINT-0010,sintetico,0,Adultos mayores estables,230,0.226,85.0,78.0,23.0,129.0,60.0,36.4,,1.0,F,,0.0,respiratorio,3
+SINT-0011,sintetico,0,Adultos mayores estables,1555,0.431,51.0,74.0,21.0,145.0,86.0,36.9,95.0,10.0,F,1.0,0.0,digestivo,3
+SINT-0012,sintetico,0,Adultos mayores estables,382,0.448,58.0,84.0,16.0,114.0,74.0,36.7,99.0,0.0,M,0.0,0.0,digestivo,3
+SINT-0013,sintetico,0,Adultos mayores estables,1836,0.195,65.0,66.0,16.0,159.0,87.0,36.6,96.0,5.0,M,0.0,0.0,otros,3
+SINT-0014,sintetico,0,Adultos mayores estables,743,0.435,56.0,75.0,17.0,129.0,69.0,36.9,100.0,,M,1.0,1.0,trauma,5
+SINT-0015,sintetico,0,Adultos mayores estables,1132,0.209,74.0,90.0,16.0,124.0,60.0,36.1,99.0,9.0,M,0.0,0.0,fiebre_general,3
+SINT-0016,sintetico,0,Adultos mayores estables,1728,0.797,64.0,95.0,16.0,103.0,65.0,36.7,97.0,6.0,F,0.0,0.0,fiebre_general,3
+SINT-0017,sintetico,0,Adultos mayores estables,823,0.345,93.0,72.0,16.0,139.0,82.0,36.6,95.0,,M,0.0,0.0,otros,3
+SINT-0018,sintetico,0,Adultos mayores estables,716,0.563,60.0,77.0,18.0,136.0,77.0,36.3,96.0,3.0,M,1.0,0.0,otros,3
+SINT-0019,sintetico,0,Adultos mayores estables,971,0.9,70.0,54.0,16.0,119.0,60.0,36.0,98.0,0.0,F,0.0,0.0,neurologico,2
+SINT-0020,sintetico,0,Adultos mayores estables,16,0.696,75.0,62.0,18.0,161.0,84.0,36.5,97.0,4.0,F,0.0,0.0,digestivo,4
+SINT-0021,sintetico,0,Adultos mayores estables,599,0.262,62.0,71.0,18.0,132.0,82.0,37.2,100.0,5.0,F,0.0,1.0,neurologico,3
+SINT-0022,sintetico,0,Adultos mayores estables,179,0.228,52.0,63.0,16.0,134.0,68.0,37.0,,2.0,F,0.0,0.0,otros,3
+SINT-0023,sintetico,0,Adultos mayores estables,848,0.58,81.0,76.0,17.0,141.0,60.0,36.7,98.0,0.0,F,0.0,0.0,digestivo,3
+SINT-0024,sintetico,0,Adultos mayores estables,1040,0.731,89.0,66.0,17.0,139.0,87.0,36.7,100.0,4.0,F,1.0,0.0,psiquiatrico_sustancias,2
+SINT-0025,sintetico,0,Adultos mayores estables,1800,0.622,70.0,65.0,18.0,135.0,91.0,36.4,96.0,,F,0.0,1.0,trauma,4
+SINT-0026,sintetico,0,Adultos mayores estables,63,0.42,66.0,79.0,19.0,107.0,70.0,36.3,98.0,3.0,M,0.0,0.0,digestivo,4
+SINT-0027,sintetico,0,Adultos mayores estables,1335,0.47,86.0,96.0,19.0,126.0,66.0,36.6,97.0,,F,0.0,0.0,digestivo,3
+SINT-0028,sintetico,0,Adultos mayores estables,61,0.577,56.0,86.0,20.0,132.0,78.0,36.4,99.0,5.0,M,0.0,0.0,genitourinario_gineco,4
+SINT-0029,sintetico,0,Adultos mayores estables,1733,0.794,72.0,60.0,17.0,135.0,68.0,36.8,96.0,,M,1.0,0.0,musculoesqueletico,3
+SINT-0030,sintetico,0,Adultos mayores estables,1595,0.327,60.0,83.0,18.0,141.0,78.0,36.6,99.0,,M,0.0,0.0,neurologico,3
+SINT-0031,sintetico,0,Adultos mayores estables,1300,0.093,58.0,72.0,20.0,110.0,56.0,36.7,98.0,,F,1.0,0.0,musculoesqueletico,4
+SINT-0032,sintetico,0,Adultos mayores estables,245,0.059,78.0,73.0,20.0,81.0,51.0,36.5,95.0,0.0,M,1.0,0.0,fiebre_general,2
+SINT-0033,sintetico,0,Adultos mayores estables,367,0.73,61.0,62.0,16.0,147.0,78.0,36.4,94.0,2.0,M,0.0,1.0,trauma,4
+SINT-0034,sintetico,0,Adultos mayores estables,1325,0.567,82.0,84.0,17.0,138.0,67.0,36.6,97.0,4.0,M,0.0,0.0,digestivo,3
+SINT-0035,sintetico,0,Adultos mayores estables,981,0.774,72.0,65.0,21.0,133.0,85.0,36.8,,2.0,M,0.0,0.0,orl_ojos_dental,2
+SINT-0036,sintetico,0,Adultos mayores estables,800,0.888,79.0,78.0,20.0,125.0,76.0,36.4,99.0,0.0,F,1.0,0.0,cardiovascular,4
+SINT-0037,sintetico,0,Adultos mayores estables,1774,0.16,64.0,78.0,18.0,139.0,71.0,37.3,99.0,0.0,M,0.0,0.0,digestivo,3
+SINT-0038,sintetico,0,Adultos mayores estables,179,0.298,52.0,63.0,17.0,136.0,69.0,37.0,,1.0,F,0.0,0.0,otros,3
+SINT-0039,sintetico,0,Adultos mayores estables,1808,0.672,74.0,77.0,20.0,146.0,66.0,36.4,99.0,0.0,F,0.0,0.0,neurologico,3
+SINT-0040,sintetico,0,Adultos mayores estables,89,0.093,57.0,78.0,18.0,121.0,80.0,36.4,99.0,4.0,M,0.0,1.0,trauma,4
+SINT-0041,sintetico,0,Adultos mayores estables,512,0.604,60.0,62.0,14.0,133.0,89.0,36.9,100.0,6.0,M,0.0,0.0,respiratorio,2
+SINT-0042,sintetico,0,Adultos mayores estables,1728,0.601,59.0,90.0,15.0,110.0,49.0,36.7,96.0,2.0,F,0.0,0.0,fiebre_general,3
+SINT-0043,sintetico,0,Adultos mayores estables,722,0.89,63.0,61.0,18.0,120.0,55.0,36.7,100.0,8.0,F,0.0,0.0,respiratorio,2
+SINT-0044,sintetico,0,Adultos mayores estables,438,0.188,67.0,89.0,18.0,141.0,78.0,36.7,99.0,0.0,M,1.0,,digestivo,3
+SINT-0045,sintetico,0,Adultos mayores estables,367,0.788,74.0,57.0,18.0,140.0,96.0,36.2,97.0,4.0,M,0.0,1.0,trauma,4
+SINT-0046,sintetico,0,Adultos mayores estables,953,0.66,64.0,66.0,17.0,148.0,73.0,36.8,100.0,5.0,F,0.0,1.0,musculoesqueletico,3
+SINT-0047,sintetico,0,Adultos mayores estables,97,0.917,78.0,83.0,14.0,158.0,67.0,36.8,,5.0,M,0.0,0.0,digestivo,3
+SINT-0048,sintetico,0,Adultos mayores estables,1826,0.599,57.0,79.0,16.0,113.0,77.0,,98.0,4.0,F,0.0,1.0,musculoesqueletico,3
+SINT-0049,sintetico,0,Adultos mayores estables,1320,0.135,69.0,89.0,18.0,105.0,75.0,36.7,95.0,3.0,F,1.0,1.0,digestivo,3
+SINT-0050,sintetico,0,Adultos mayores estables,1409,0.403,59.0,81.0,18.0,131.0,71.0,36.8,96.0,0.0,M,0.0,1.0,otros,4
+SINT-0051,sintetico,0,Adultos mayores estables,221,0.068,78.0,86.0,20.0,119.0,70.0,36.4,99.0,0.0,M,0.0,0.0,genitourinario_gineco,4
+SINT-0052,sintetico,0,Adultos mayores estables,403,0.857,74.0,60.0,16.0,151.0,74.0,36.9,96.0,0.0,M,0.0,0.0,musculoesqueletico,3
+SINT-0053,sintetico,0,Adultos mayores estables,512,0.321,70.0,59.0,14.0,128.0,82.0,36.9,100.0,5.0,M,0.0,0.0,respiratorio,2
+SINT-0054,sintetico,0,Adultos mayores estables,58,0.338,55.0,95.0,20.0,114.0,71.0,36.3,,2.0,M,1.0,0.0,musculoesqueletico,5
+SINT-0055,sintetico,0,Adultos mayores estables,920,0.128,46.0,58.0,18.0,116.0,75.0,36.3,97.0,7.0,F,0.0,,digestivo,3
+SINT-0056,sintetico,0,Adultos mayores estables,734,0.033,94.0,79.0,24.0,142.0,98.0,36.6,95.0,0.0,M,0.0,0.0,respiratorio,3
+SINT-0057,sintetico,1,Taquicardia / febril,890,0.555,57.0,103.0,16.0,156.0,76.0,36.9,97.0,8.0,F,0.0,0.0,digestivo,3
+SINT-0058,sintetico,1,Taquicardia / febril,890,0.516,56.0,101.0,17.0,140.0,86.0,36.9,98.0,8.0,F,0.0,0.0,digestivo,3
+SINT-0059,sintetico,1,Taquicardia / febril,1835,0.881,36.0,115.0,18.0,135.0,78.0,37.3,95.0,0.0,M,1.0,0.0,psiquiatrico_sustancias,2
+SINT-0060,sintetico,1,Taquicardia / febril,1404,0.319,60.0,122.0,17.0,156.0,97.0,36.9,98.0,0.0,M,0.0,0.0,psiquiatrico_sustancias,3
+SINT-0061,sintetico,1,Taquicardia / febril,1625,0.118,52.0,105.0,16.0,146.0,77.0,37.2,98.0,,M,0.0,,orl_ojos_dental,4
+SINT-0062,sintetico,1,Taquicardia / febril,950,0.82,75.0,123.0,18.0,137.0,74.0,37.2,98.0,,F,0.0,0.0,digestivo,3
+SINT-0063,sintetico,1,Taquicardia / febril,598,0.558,28.0,112.0,20.0,125.0,88.0,36.9,99.0,8.0,M,0.0,0.0,cardiovascular,2
+SINT-0064,sintetico,1,Taquicardia / febril,453,0.699,81.0,105.0,21.0,148.0,72.0,37.1,92.0,2.0,F,0.0,0.0,respiratorio,4
+SINT-0065,sintetico,1,Taquicardia / febril,1053,0.889,56.0,105.0,16.0,136.0,89.0,37.0,99.0,8.0,F,1.0,,psiquiatrico_sustancias,2
+SINT-0066,sintetico,1,Taquicardia / febril,146,0.65,31.0,104.0,26.0,163.0,113.0,38.9,,7.0,M,1.0,0.0,fiebre_general,2
+SINT-0067,sintetico,1,Taquicardia / febril,1346,0.842,55.0,104.0,18.0,130.0,85.0,37.0,99.0,8.0,F,0.0,0.0,musculoesqueletico,3
+SINT-0068,sintetico,1,Taquicardia / febril,1684,0.689,56.0,138.0,24.0,127.0,71.0,36.0,93.0,3.0,F,0.0,1.0,musculoesqueletico,3
+SINT-0069,sintetico,1,Taquicardia / febril,1200,0.409,36.0,119.0,16.0,125.0,73.0,36.8,100.0,3.0,F,0.0,1.0,fiebre_general,3
+SINT-0070,sintetico,1,Taquicardia / febril,323,0.353,57.0,86.0,19.0,155.0,101.0,37.7,97.0,3.0,M,1.0,0.0,digestivo,3
+SINT-0071,sintetico,1,Taquicardia / febril,824,0.217,65.0,106.0,18.0,142.0,86.0,36.9,95.0,9.0,M,1.0,1.0,trauma,3
+SINT-0072,sintetico,1,Taquicardia / febril,101,0.368,27.0,125.0,17.0,177.0,97.0,37.2,,3.0,M,0.0,0.0,digestivo,3
+SINT-0073,sintetico,1,Taquicardia / febril,1223,0.267,61.0,110.0,23.0,113.0,76.0,37.0,96.0,6.0,F,0.0,0.0,respiratorio,3
+SINT-0074,sintetico,1,Taquicardia / febril,124,0.319,83.0,106.0,19.0,140.0,64.0,37.5,,6.0,M,0.0,0.0,neurologico,3
+SINT-0075,sintetico,1,Taquicardia / febril,104,0.239,29.0,99.0,16.0,148.0,84.0,37.4,,5.0,M,1.0,0.0,digestivo,3
+SINT-0076,sintetico,1,Taquicardia / febril,1321,0.128,47.0,103.0,18.0,126.0,83.0,37.4,96.0,,M,0.0,0.0,piel_alergia,3
+SINT-0077,sintetico,1,Taquicardia / febril,559,0.423,87.0,108.0,18.0,134.0,69.0,37.5,97.0,4.0,M,0.0,1.0,genitourinario_gineco,3
+SINT-0078,sintetico,1,Taquicardia / febril,311,0.758,71.0,139.0,22.0,100.0,52.0,36.6,96.0,,F,0.0,0.0,cardiovascular,2
+SINT-0079,sintetico,1,Taquicardia / febril,1629,0.438,24.0,108.0,20.0,150.0,89.0,36.7,97.0,,M,0.0,1.0,otros,3
+SINT-0080,sintetico,1,Taquicardia / febril,362,0.781,73.0,82.0,18.0,161.0,79.0,37.9,98.0,2.0,M,0.0,0.0,musculoesqueletico,4
+SINT-0081,sintetico,1,Taquicardia / febril,613,0.043,69.0,111.0,18.0,156.0,88.0,38.2,95.0,0.0,M,0.0,0.0,fiebre_general,3
+SINT-0082,sintetico,1,Taquicardia / febril,1087,0.12,20.0,124.0,18.0,126.0,71.0,36.7,99.0,,F,0.0,0.0,orl_ojos_dental,3
+SINT-0083,sintetico,1,Taquicardia / febril,1337,0.208,28.0,116.0,16.0,122.0,68.0,36.9,98.0,2.0,F,0.0,0.0,respiratorio,3
+SINT-0084,sintetico,1,Taquicardia / febril,425,0.568,26.0,109.0,20.0,145.0,98.0,37.2,98.0,2.0,M,0.0,0.0,otros,4
+SINT-0085,sintetico,1,Taquicardia / febril,1336,0.936,58.0,,18.0,127.0,78.0,37.2,99.0,7.0,F,1.0,0.0,psiquiatrico_sustancias,2
+SINT-0086,sintetico,2,Compromiso respiratorio,1193,0.853,76.0,,40.0,144.0,100.0,36.5,80.0,8.0,F,0.0,0.0,respiratorio,4
+SINT-0087,sintetico,2,Compromiso respiratorio,634,0.811,64.0,125.0,28.0,148.0,90.0,36.8,92.0,,F,1.0,0.0,respiratorio,2
+SINT-0088,sintetico,2,Compromiso respiratorio,1620,0.718,52.0,115.0,22.0,121.0,92.0,,79.0,,F,0.0,1.0,respiratorio,3
+SINT-0089,sintetico,2,Compromiso respiratorio,335,0.851,73.0,87.0,27.0,116.0,70.0,36.3,83.0,,M,1.0,1.0,fiebre_general,2
+SINT-0090,sintetico,2,Compromiso respiratorio,187,0.275,67.0,106.0,29.0,113.0,64.0,37.0,94.0,0.0,M,1.0,1.0,orl_ojos_dental,2
+SINT-0091,sintetico,2,Compromiso respiratorio,1316,0.739,61.0,110.0,28.0,112.0,68.0,36.8,93.0,,F,0.0,0.0,respiratorio,2
+SINT-0092,sintetico,2,Compromiso respiratorio,1262,0.663,54.0,,,121.0,94.0,37.6,77.0,8.0,M,1.0,1.0,neurologico,3
+SINT-0093,sintetico,2,Compromiso respiratorio,1018,0.161,76.0,,40.0,145.0,100.0,36.5,,8.0,F,0.0,0.0,digestivo,4
+SINT-0094,sintetico,2,Compromiso respiratorio,1824,0.462,53.0,,28.0,128.0,86.0,36.5,78.0,7.0,M,0.0,0.0,musculoesqueletico,4
+SINT-0095,sintetico,2,Compromiso respiratorio,1264,0.642,47.0,,36.0,124.0,90.0,36.9,80.0,9.0,F,0.0,0.0,respiratorio,3
+SINT-0096,sintetico,3,Hipertensión arterial,49,0.905,45.0,87.0,18.0,187.0,82.0,36.4,,3.0,M,0.0,0.0,piel_alergia,4
+SINT-0097,sintetico,3,Hipertensión arterial,1088,0.289,52.0,92.0,20.0,162.0,87.0,36.6,96.0,9.0,F,0.0,0.0,orl_ojos_dental,3
+SINT-0098,sintetico,3,Hipertensión arterial,1847,0.774,63.0,92.0,19.0,150.0,86.0,36.6,99.0,0.0,F,1.0,1.0,trauma,1
+SINT-0099,sintetico,3,Hipertensión arterial,1322,0.206,30.0,79.0,18.0,158.0,95.0,36.7,96.0,0.0,M,0.0,1.0,trauma,4
+SINT-0100,sintetico,3,Hipertensión arterial,1606,0.772,70.0,102.0,16.0,153.0,85.0,36.2,98.0,,F,0.0,0.0,psiquiatrico_sustancias,3
+SINT-0101,sintetico,3,Hipertensión arterial,1210,0.078,63.0,64.0,18.0,171.0,92.0,36.4,98.0,6.0,F,0.0,0.0,digestivo,3
+SINT-0102,sintetico,3,Hipertensión arterial,767,0.895,67.0,78.0,18.0,134.0,95.0,36.9,100.0,,M,0.0,0.0,digestivo,3
+SINT-0103,sintetico,3,Hipertensión arterial,379,0.206,57.0,79.0,20.0,205.0,126.0,37.0,98.0,6.0,M,1.0,1.0,trauma,2
+SINT-0104,sintetico,3,Hipertensión arterial,542,0.263,36.0,95.0,18.0,168.0,103.0,36.7,100.0,9.0,F,0.0,0.0,cardiovascular,3
+SINT-0105,sintetico,3,Hipertensión arterial,1286,0.021,42.0,76.0,16.0,178.0,80.0,36.8,99.0,,F,0.0,0.0,cardiovascular,2
+SINT-0106,sintetico,3,Hipertensión arterial,181,0.271,57.0,61.0,20.0,215.0,107.0,36.1,,0.0,F,0.0,0.0,neurologico,3
+SINT-0107,sintetico,3,Hipertensión arterial,726,0.588,77.0,75.0,24.0,177.0,88.0,36.9,93.0,10.0,M,0.0,0.0,digestivo,3
+SINT-0108,sintetico,3,Hipertensión arterial,1463,0.428,55.0,87.0,18.0,139.0,85.0,36.9,99.0,,F,0.0,0.0,neurologico,3
+SINT-0109,sintetico,3,Hipertensión arterial,1148,0.637,69.0,99.0,18.0,175.0,105.0,36.8,98.0,0.0,M,1.0,0.0,respiratorio,1
+SINT-0110,sintetico,3,Hipertensión arterial,1700,0.421,78.0,82.0,27.0,192.0,84.0,36.6,95.0,,F,0.0,0.0,respiratorio,3
+SINT-0111,sintetico,3,Hipertensión arterial,741,0.575,53.0,92.0,16.0,144.0,88.0,37.0,98.0,,F,1.0,1.0,trauma,4
+SINT-0112,sintetico,3,Hipertensión arterial,194,0.553,79.0,100.0,23.0,183.0,99.0,36.6,,0.0,M,0.0,0.0,respiratorio,3
+SINT-0113,sintetico,3,Hipertensión arterial,604,0.203,32.0,90.0,18.0,153.0,105.0,37.0,100.0,2.0,F,0.0,0.0,genitourinario_gineco,2
+SINT-0114,sintetico,3,Hipertensión arterial,1520,0.569,53.0,84.0,19.0,162.0,99.0,36.5,99.0,9.0,F,0.0,1.0,cardiovascular,3
+SINT-0115,sintetico,3,Hipertensión arterial,1203,0.369,64.0,76.0,17.0,154.0,90.0,36.4,99.0,2.0,F,0.0,0.0,orl_ojos_dental,3
+SINT-0116,sintetico,3,Hipertensión arterial,915,0.679,52.0,70.0,21.0,163.0,91.0,36.6,98.0,1.0,M,0.0,,respiratorio,2
+SINT-0117,sintetico,3,Hipertensión arterial,1310,0.435,64.0,108.0,20.0,154.0,88.0,36.4,99.0,4.0,F,0.0,0.0,musculoesqueletico,2
+SINT-0118,sintetico,3,Hipertensión arterial,1123,0.946,44.0,90.0,18.0,146.0,94.0,36.5,98.0,8.0,F,0.0,0.0,cardiovascular,2
+SINT-0119,sintetico,3,Hipertensión arterial,1579,0.485,52.0,79.0,20.0,157.0,103.0,37.0,98.0,8.0,F,1.0,0.0,digestivo,3
+SINT-0120,sintetico,3,Hipertensión arterial,1030,0.495,68.0,78.0,18.0,176.0,84.0,36.9,100.0,5.0,F,0.0,0.0,neurologico,3
+SINT-0121,sintetico,3,Hipertensión arterial,610,0.118,68.0,78.0,18.0,138.0,93.0,36.9,100.0,0.0,F,0.0,0.0,respiratorio,3
+SINT-0122,sintetico,3,Hipertensión arterial,448,0.992,46.0,110.0,18.0,161.0,111.0,36.6,97.0,0.0,F,0.0,0.0,neurologico,3
+SINT-0123,sintetico,3,Hipertensión arterial,52,0.11,45.0,91.0,16.0,140.0,97.0,37.0,,3.0,F,0.0,0.0,neurologico,4
+SINT-0124,sintetico,3,Hipertensión arterial,21,0.622,62.0,103.0,18.0,143.0,97.0,36.4,,3.0,F,,0.0,orl_ojos_dental,4
+SINT-0125,sintetico,3,Hipertensión arterial,1628,0.355,76.0,86.0,18.0,155.0,94.0,36.1,,10.0,M,1.0,1.0,trauma,3
+SINT-0126,sintetico,3,Hipertensión arterial,87,0.558,43.0,92.0,19.0,152.0,91.0,36.5,99.0,6.0,M,0.0,1.0,trauma,4
+SINT-0127,sintetico,3,Hipertensión arterial,110,0.506,42.0,76.0,19.0,154.0,95.0,36.1,,4.0,F,0.0,0.0,musculoesqueletico,4
+SINT-0128,sintetico,3,Hipertensión arterial,451,0.785,47.0,77.0,23.0,154.0,100.0,36.9,92.0,4.0,M,0.0,0.0,respiratorio,3
+SINT-0129,sintetico,3,Hipertensión arterial,584,0.201,53.0,96.0,21.0,191.0,120.0,36.1,95.0,2.0,M,0.0,0.0,respiratorio,2
+SINT-0130,sintetico,3,Hipertensión arterial,1436,0.876,65.0,76.0,18.0,153.0,88.0,36.4,99.0,,F,0.0,1.0,piel_alergia,4
+SINT-0131,sintetico,3,Hipertensión arterial,110,0.046,46.0,75.0,20.0,146.0,88.0,36.0,,5.0,F,0.0,0.0,musculoesqueletico,4
+SINT-0132,sintetico,3,Hipertensión arterial,95,0.999,79.0,61.0,18.0,192.0,96.0,36.7,,10.0,F,0.0,0.0,cardiovascular,3
+SINT-0133,sintetico,3,Hipertensión arterial,1429,0.431,71.0,74.0,18.0,187.0,100.0,36.6,91.0,0.0,M,0.0,0.0,respiratorio,2
+SINT-0134,sintetico,3,Hipertensión arterial,1060,0.108,49.0,112.0,16.0,144.0,100.0,36.4,97.0,1.0,M,0.0,1.0,musculoesqueletico,4
+SINT-0135,sintetico,3,Hipertensión arterial,1749,0.411,45.0,70.0,16.0,150.0,95.0,36.4,95.0,4.0,M,0.0,0.0,genitourinario_gineco,3
+SINT-0136,sintetico,3,Hipertensión arterial,801,0.171,90.0,85.0,21.0,188.0,105.0,37.7,97.0,,F,1.0,0.0,psiquiatrico_sustancias,3
+SINT-0137,sintetico,3,Hipertensión arterial,839,0.697,37.0,86.0,18.0,155.0,110.0,36.8,98.0,6.0,M,0.0,0.0,respiratorio,4
+SINT-0138,sintetico,3,Hipertensión arterial,249,0.88,56.0,90.0,18.0,175.0,98.0,35.7,94.0,,M,1.0,,psiquiatrico_sustancias,3
+SINT-0139,sintetico,4,Jóvenes con signos estables,1535,0.522,31.0,95.0,20.0,118.0,78.0,36.7,97.0,0.0,F,1.0,0.0,psiquiatrico_sustancias,2
+SINT-0140,sintetico,4,Jóvenes con signos estables,1357,0.417,23.0,82.0,16.0,120.0,82.0,36.9,100.0,8.0,F,0.0,,digestivo,3
+SINT-0141,sintetico,4,Jóvenes con signos estables,924,0.911,32.0,85.0,19.0,113.0,87.0,36.4,100.0,4.0,F,0.0,0.0,genitourinario_gineco,3
+SINT-0142,sintetico,4,Jóvenes con signos estables,484,0.746,25.0,63.0,19.0,134.0,84.0,36.4,100.0,,M,0.0,0.0,psiquiatrico_sustancias,4
+SINT-0143,sintetico,4,Jóvenes con signos estables,1537,0.112,44.0,65.0,16.0,98.0,59.0,37.0,99.0,8.0,F,0.0,0.0,genitourinario_gineco,3
+SINT-0144,sintetico,4,Jóvenes con signos estables,515,0.51,34.0,85.0,21.0,136.0,69.0,36.8,100.0,3.0,M,0.0,0.0,digestivo,3
+SINT-0145,sintetico,4,Jóvenes con signos estables,1120,0.742,19.0,78.0,20.0,125.0,69.0,37.0,98.0,7.0,M,0.0,1.0,trauma,4
+SINT-0146,sintetico,4,Jóvenes con signos estables,919,0.533,40.0,95.0,21.0,146.0,80.0,36.6,98.0,7.0,F,0.0,0.0,digestivo,3
+SINT-0147,sintetico,4,Jóvenes con signos estables,951,0.32,30.0,72.0,18.0,119.0,66.0,36.4,100.0,8.0,F,0.0,0.0,digestivo,3
+SINT-0148,sintetico,4,Jóvenes con signos estables,88,0.392,42.0,59.0,19.0,133.0,86.0,36.6,100.0,6.0,M,0.0,0.0,cardiovascular,2
+SINT-0149,sintetico,4,Jóvenes con signos estables,1706,0.183,33.0,100.0,18.0,121.0,72.0,35.9,97.0,8.0,F,0.0,0.0,respiratorio,3
+SINT-0150,sintetico,4,Jóvenes con signos estables,1635,0.512,44.0,77.0,18.0,140.0,84.0,36.2,100.0,9.0,M,1.0,1.0,musculoesqueletico,3
+SINT-0151,sintetico,4,Jóvenes con signos estables,948,0.857,27.0,75.0,17.0,148.0,78.0,36.9,98.0,,M,0.0,0.0,musculoesqueletico,3
+SINT-0152,sintetico,4,Jóvenes con signos estables,411,0.4,26.0,74.0,16.0,107.0,73.0,36.1,100.0,8.0,M,0.0,0.0,otros,4
+SINT-0153,sintetico,4,Jóvenes con signos estables,1501,0.098,35.0,91.0,18.0,142.0,92.0,37.0,99.0,3.0,M,0.0,0.0,orl_ojos_dental,4
+SINT-0154,sintetico,4,Jóvenes con signos estables,276,0.841,30.0,89.0,18.0,128.0,84.0,37.1,99.0,,M,0.0,0.0,respiratorio,2
+SINT-0155,sintetico,4,Jóvenes con signos estables,1421,0.383,29.0,88.0,16.0,114.0,70.0,37.0,98.0,1.0,F,0.0,0.0,genitourinario_gineco,4
+SINT-0156,sintetico,4,Jóvenes con signos estables,1794,0.518,24.0,105.0,18.0,124.0,81.0,36.5,99.0,,F,0.0,1.0,musculoesqueletico,2
+SINT-0157,sintetico,4,Jóvenes con signos estables,252,0.315,19.0,91.0,18.0,124.0,71.0,36.8,98.0,7.0,M,0.0,0.0,cardiovascular,4
+SINT-0158,sintetico,4,Jóvenes con signos estables,1383,0.893,39.0,76.0,16.0,107.0,64.0,36.8,100.0,1.0,F,0.0,1.0,trauma,5
+SINT-0159,sintetico,4,Jóvenes con signos estables,785,0.31,42.0,91.0,17.0,128.0,91.0,37.0,98.0,8.0,M,0.0,1.0,otros,4
+SINT-0160,sintetico,4,Jóvenes con signos estables,1535,0.399,38.0,108.0,18.0,114.0,86.0,36.5,96.0,4.0,F,1.0,0.0,psiquiatrico_sustancias,2
+SINT-0161,sintetico,4,Jóvenes con signos estables,1081,0.712,38.0,99.0,19.0,126.0,76.0,36.7,98.0,,M,0.0,0.0,cardiovascular,2
+SINT-0162,sintetico,4,Jóvenes con signos estables,1569,0.827,18.0,91.0,17.0,138.0,87.0,37.5,100.0,7.0,F,0.0,0.0,otros,4
+SINT-0163,sintetico,4,Jóvenes con signos estables,1827,0.937,29.0,62.0,18.0,124.0,88.0,36.6,97.0,1.0,F,0.0,0.0,genitourinario_gineco,3
+SINT-0164,sintetico,4,Jóvenes con signos estables,780,0.908,32.0,80.0,20.0,110.0,70.0,36.1,99.0,0.0,F,0.0,1.0,trauma,4
+SINT-0165,sintetico,4,Jóvenes con signos estables,1542,0.648,30.0,96.0,18.0,128.0,66.0,36.7,100.0,0.0,F,,0.0,psiquiatrico_sustancias,2
+SINT-0166,sintetico,4,Jóvenes con signos estables,486,0.529,28.0,81.0,16.0,121.0,69.0,36.9,100.0,7.0,F,0.0,0.0,cardiovascular,3
+SINT-0167,sintetico,4,Jóvenes con signos estables,1485,0.201,37.0,83.0,18.0,131.0,81.0,36.7,96.0,3.0,M,1.0,1.0,trauma,3
+SINT-0168,sintetico,4,Jóvenes con signos estables,1122,0.783,25.0,88.0,18.0,106.0,55.0,36.9,99.0,1.0,M,0.0,0.0,piel_alergia,4
+SINT-0169,sintetico,4,Jóvenes con signos estables,1462,0.728,40.0,97.0,18.0,113.0,72.0,36.5,98.0,8.0,F,0.0,0.0,musculoesqueletico,3
+SINT-0170,sintetico,4,Jóvenes con signos estables,319,0.412,54.0,93.0,16.0,110.0,72.0,36.9,99.0,10.0,F,0.0,0.0,musculoesqueletico,4
+SINT-0171,sintetico,4,Jóvenes con signos estables,961,0.66,19.0,95.0,17.0,121.0,71.0,37.2,96.0,2.0,F,0.0,0.0,psiquiatrico_sustancias,2
+SINT-0172,sintetico,4,Jóvenes con signos estables,1213,0.468,23.0,101.0,18.0,133.0,80.0,36.8,97.0,,F,1.0,0.0,cardiovascular,3
+SINT-0173,sintetico,4,Jóvenes con signos estables,665,0.516,32.0,96.0,18.0,117.0,74.0,37.0,100.0,9.0,F,0.0,1.0,piel_alergia,4
+SINT-0174,sintetico,4,Jóvenes con signos estables,1082,0.167,30.0,87.0,16.0,130.0,80.0,36.6,97.0,,F,0.0,0.0,neurologico,3
+SINT-0175,sintetico,4,Jóvenes con signos estables,628,0.783,40.0,69.0,18.0,105.0,67.0,36.1,97.0,0.0,F,0.0,0.0,digestivo,3
+SINT-0176,sintetico,4,Jóvenes con signos estables,782,0.381,22.0,93.0,18.0,115.0,69.0,36.6,97.0,6.0,M,0.0,1.0,trauma,3
+SINT-0177,sintetico,4,Jóvenes con signos estables,1120,0.094,21.0,70.0,20.0,135.0,70.0,37.0,98.0,7.0,M,0.0,1.0,trauma,4
+SINT-0178,sintetico,4,Jóvenes con signos estables,616,0.212,46.0,84.0,17.0,129.0,92.0,36.4,99.0,3.0,M,0.0,1.0,trauma,4
+SINT-0179,sintetico,4,Jóvenes con signos estables,1675,0.094,29.0,91.0,18.0,132.0,90.0,36.4,100.0,0.0,F,0.0,1.0,genitourinario_gineco,4
+SINT-0180,sintetico,4,Jóvenes con signos estables,1775,0.486,21.0,94.0,16.0,120.0,65.0,37.1,100.0,8.0,M,0.0,0.0,orl_ojos_dental,2
+SINT-0181,sintetico,4,Jóvenes con signos estables,515,0.145,35.0,82.0,22.0,126.0,70.0,36.7,100.0,4.0,M,0.0,0.0,digestivo,3
+SINT-0182,sintetico,4,Jóvenes con signos estables,485,0.36,24.0,61.0,16.0,128.0,86.0,36.8,100.0,8.0,F,0.0,0.0,otros,3
+SINT-0183,sintetico,4,Jóvenes con signos estables,1540,0.657,25.0,70.0,16.0,129.0,,37.0,99.0,0.0,M,0.0,0.0,psiquiatrico_sustancias,3
+SINT-0184,sintetico,4,Jóvenes con signos estables,400,0.525,26.0,106.0,20.0,125.0,84.0,36.4,100.0,6.0,M,0.0,0.0,neurologico,3
+SINT-0185,sintetico,4,Jóvenes con signos estables,1796,0.049,32.0,96.0,16.0,143.0,94.0,36.2,97.0,,M,0.0,0.0,genitourinario_gineco,4
+SINT-0186,sintetico,4,Jóvenes con signos estables,402,0.305,21.0,82.0,20.0,123.0,61.0,36.9,98.0,0.0,F,0.0,0.0,psiquiatrico_sustancias,4
+SINT-0187,sintetico,4,Jóvenes con signos estables,1195,0.93,52.0,97.0,18.0,149.0,73.0,36.6,100.0,8.0,F,0.0,0.0,digestivo,3
+SINT-0188,sintetico,4,Jóvenes con signos estables,1057,0.154,20.0,72.0,18.0,136.0,90.0,37.0,100.0,0.0,M,1.0,0.0,psiquiatrico_sustancias,3
+SINT-0189,sintetico,4,Jóvenes con signos estables,1119,0.37,24.0,85.0,,114.0,77.0,37.1,99.0,4.0,F,1.0,1.0,musculoesqueletico,4
+SINT-0190,sintetico,4,Jóvenes con signos estables,571,0.38,25.0,90.0,20.0,150.0,86.0,36.3,100.0,,F,0.0,0.0,genitourinario_gineco,3
+SINT-0191,sintetico,4,Jóvenes con signos estables,138,0.682,41.0,91.0,19.0,134.0,84.0,36.5,,2.0,F,1.0,0.0,digestivo,3
+SINT-0192,sintetico,4,Jóvenes con signos estables,312,0.831,29.0,90.0,16.0,124.0,77.0,36.8,98.0,10.0,F,0.0,,musculoesqueletico,3
+SINT-0193,sintetico,4,Jóvenes con signos estables,1079,0.605,30.0,99.0,18.0,121.0,70.0,36.0,97.0,,F,0.0,0.0,musculoesqueletico,3
+SINT-0194,sintetico,4,Jóvenes con signos estables,1676,0.254,20.0,69.0,17.0,134.0,75.0,36.9,99.0,5.0,M,0.0,1.0,neurologico,4
+SINT-0195,sintetico,4,Jóvenes con signos estables,1086,0.663,32.0,91.0,18.0,123.0,80.0,36.5,98.0,8.0,F,0.0,0.0,musculoesqueletico,3
+SINT-0196,sintetico,4,Jóvenes con signos estables,481,0.72,29.0,82.0,16.0,133.0,80.0,36.6,99.0,6.0,F,0.0,1.0,orl_ojos_dental,2
+SINT-0197,sintetico,4,Jóvenes con signos estables,1232,0.74,32.0,112.0,19.0,133.0,84.0,35.7,99.0,,F,0.0,0.0,cardiovascular,4
+SINT-0198,sintetico,4,Jóvenes con signos estables,1637,0.87,42.0,64.0,18.0,131.0,64.0,36.8,98.0,4.0,M,0.0,,piel_alergia,4
+SINT-0199,sintetico,4,Jóvenes con signos estables,273,0.689,29.0,91.0,17.0,159.0,93.0,36.8,100.0,2.0,F,0.0,1.0,otros,4
+SINT-0200,sintetico,4,Jóvenes con signos estables,869,0.761,22.0,78.0,16.0,112.0,74.0,36.7,99.0,0.0,F,0.0,0.0,genitourinario_gineco,4

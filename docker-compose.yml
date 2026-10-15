@@ -83,6 +83,10 @@ services:
       ORTHANC_PASSWORD: ${ORTHANC_PASSWORD:-orthanc}
       MONGO_CONNECTION_STRING: mongodb://mongodb:27017/${MONGO_DB_NAME:-triaje}
       FHIR_HOOK_URL: http://api:8000/fhir-hook
+      ML_URL: http://ml:8001
+      ML_SERVICE_TOKEN: ${ML_SERVICE_TOKEN}
+      SEUDONIMO_SECRETO: ${SEUDONIMO_SECRETO}
+      ALERTA_ESCALAR_MINUTOS: ${ALERTA_ESCALAR_MINUTOS:-5}
     ports:
     - 8000:8000
     depends_on:
@@ -91,6 +95,8 @@ services:
       orthanc:
         condition: service_started
       mongodb:
+        condition: service_healthy
+      ml:
         condition: service_healthy
   frontend:
     build:
@@ -113,6 +119,22 @@ services:
     - http://frontend:80
     depends_on:
     - frontend
+
+  ml:
+    build:
+      context: ./ml
+      dockerfile: Dockerfile
+    container_name: triaje-ml
+    restart: unless-stopped
+    environment:
+      ML_SERVICE_TOKEN: ${ML_SERVICE_TOKEN}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+      
 volumes:
   hapi_postgres_data: null
   orthanc_data: null
