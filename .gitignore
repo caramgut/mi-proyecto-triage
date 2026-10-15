@@ -1,0 +1,8 @@
+
+# Secretos: nunca al repositorio
+.env
+**/.env
+pass.env
+**/pass.env
+!**/*.example
+!**/example.*
