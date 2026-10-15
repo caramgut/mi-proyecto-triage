@@ -1,8 +1,15 @@
-
-# Secretos: nunca al repositorio
+﻿.venv/
+__pycache__/
+.ipynb_checkpoints/
+*.pyc
+# Secretos locales
 .env
-**/.env
 pass.env
+# Las plantillas s├¡ se versionan
+!.env.example
+!pass.env.example
+# Secretos: nunca al repositorio
+**/.env
 **/pass.env
 !**/*.example
 !**/example.*
