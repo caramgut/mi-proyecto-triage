@@ -35,18 +35,39 @@ export function enhanceTables(container){
     count.className="table-filter-count muted small-text";
     bar.appendChild(count);
     wrap.parentNode.insertBefore(bar,wrap);
-    const apply=()=>{
-      const q=search.value.trim().toLowerCase();let visible=0;
+    // Paginación: solo cambia qué filas se ven, no los datos ni los filtros.
+    let page=1,pageSize=10;
+    const pager=document.createElement("div");
+    pager.className="table-pager";
+    pager.innerHTML=`<span class="table-pager-info muted small-text"></span><label class="table-pager-size"><span>Filas</span><select aria-label="Filas por página"><option>10</option><option>15</option><option>25</option><option>50</option></select></label><div class="table-pager-nav"><button type="button" class="btn btn-secondary btn-icon" data-pg="prev" aria-label="Página anterior">‹</button><span class="table-pager-page small-text"></span><button type="button" class="btn btn-secondary btn-icon" data-pg="next" aria-label="Página siguiente">›</button></div>`;
+    wrap.parentNode.insertBefore(pager,wrap.nextSibling);
+    const info=pager.querySelector(".table-pager-info"),pageLbl=pager.querySelector(".table-pager-page");
+    const prev=pager.querySelector('[data-pg="prev"]'),next=pager.querySelector('[data-pg="next"]'),sizeSel=pager.querySelector("select");
+    const apply=(resetPage=true)=>{
+      if(resetPage)page=1;
+      const q=search.value.trim().toLowerCase();
+      const matches=[];
       table.querySelectorAll("tbody tr").forEach(tr=>{
         const text=tr.textContent.toLowerCase();
         const okText=!q||text.includes(q);
         const okSelect=selects.every(([i,sel])=>!sel.value||tr.children[i]?.textContent.trim()===sel.value);
-        const ok=okText&&okSelect;tr.hidden=!ok;if(ok)visible++;
+        if(okText&&okSelect)matches.push(tr);else tr.hidden=true;
       });
-      count.textContent=`${visible} resultado${visible===1?"":"s"}`;
+      const total=matches.length,pages=Math.max(1,Math.ceil(total/pageSize));
+      page=Math.min(page,pages);
+      const from=(page-1)*pageSize,to=from+pageSize;
+      matches.forEach((tr,i)=>{tr.hidden=!(i>=from&&i<to);});
+      count.textContent=`${total} resultado${total===1?"":"s"}`;
+      info.textContent=total?`Mostrando ${from+1}–${Math.min(to,total)} de ${total}`:"Sin resultados";
+      pageLbl.textContent=`Página ${page} de ${pages}`;
+      prev.disabled=page<=1;next.disabled=page>=pages;
+      pager.hidden=total<=10&&pageSize===10;
     };
-    search.addEventListener("input",apply);
-    selects.forEach(([,sel])=>sel.addEventListener("change",apply));
+    search.addEventListener("input",()=>apply());
+    selects.forEach(([,sel])=>sel.addEventListener("change",()=>apply()));
+    prev.addEventListener("click",()=>{page--;apply(false)});
+    next.addEventListener("click",()=>{page++;apply(false)});
+    sizeSel.addEventListener("change",()=>{pageSize=Number(sizeSel.value);apply()});
     apply();
   });
 }

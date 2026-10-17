@@ -1,3 +1,24 @@
-.pacs-layout{display:grid;grid-template-columns:minmax(260px,330px) 1fr;gap:1rem}.study-list{display:grid;gap:.65rem;align-content:start}.study-card{border:1px solid var(--border);background:#fff;border-radius:12px;padding:.8rem;text-align:left;width:100%;color:var(--text)}.study-card:hover,.study-card.active{border-color:var(--primary);box-shadow:0 0 0 2px rgba(23,107,135,.09)}.study-card strong{display:block;margin-bottom:.25rem}.study-meta{display:flex;gap:.4rem;flex-wrap:wrap;color:var(--muted);font-size:.78rem}.viewer-shell{background:#101820;border-radius:14px;overflow:hidden;border:1px solid #293845;min-height:520px;display:grid;grid-template-rows:auto 1fr}.viewer-toolbar{display:flex;gap:.55rem;align-items:center;flex-wrap:wrap;background:#17242f;padding:.65rem;color:#e7eef5}.viewer-toolbar label{display:flex;align-items:center;gap:.45rem;color:#dbe7ef;font-size:.76rem}.viewer-toolbar input[type="range"]{width:110px;padding:0;box-shadow:none}.viewer-stage{position:relative;overflow:hidden;min-height:440px;display:grid;place-items:center;background:#070b0f;cursor:grab;user-select:none}.viewer-stage.dragging{cursor:grabbing}.viewer-image{max-width:none;max-height:none;transform-origin:center center;will-change:transform,filter;pointer-events:none}.viewer-placeholder{color:#8ea0ae;text-align:center;padding:2rem}.viewer-info{padding:.8rem;background:#fff;border:1px solid var(--border);border-radius:12px}.instance-select{max-width:340px}
+/* viewer.css — PACS / visor DICOM (el visor se mantiene oscuro por legibilidad radiológica) */
+.pacs-layout{display:grid;grid-template-columns:minmax(260px,330px) 1fr;gap:1rem}
+.study-list{display:grid;gap:.6rem;align-content:start}
+.study-card{border:1px solid var(--border);background:#fff;border-radius:var(--radius-sm);padding:.85rem;text-align:left;width:100%;color:var(--ink);transition:border-color .15s,box-shadow .15s}
+.study-card:hover,.study-card.active{border-color:var(--lilac-500);box-shadow:0 0 0 3px rgba(143,127,208,.18);background:var(--lilac-50)}
+.study-card strong{display:block;margin-bottom:.3rem}
+.study-meta{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;color:var(--muted);font-size:.78rem}
+.viewer-shell{background:#14111f;border-radius:var(--radius);overflow:hidden;border:1px solid #2c2640;min-height:520px;display:grid;grid-template-rows:auto 1fr}
+.viewer-toolbar{display:flex;gap:.55rem;align-items:center;flex-wrap:wrap;background:#1d1830;padding:.7rem;color:#ece8fb}
+.viewer-toolbar label{display:flex;align-items:center;gap:.45rem;color:#d9d3ee;font-size:.76rem}
+.viewer-toolbar input[type="range"]{width:110px;padding:0;box-shadow:none;border:0;background:transparent}
+.viewer-toolbar .btn-secondary{background:#2a2442;border-color:#3b3358;color:#ece8fb}
+.viewer-toolbar .btn-secondary:hover{background:#352d55}
+.viewer-toolbar select{background:#2a2442;border-color:#3b3358;color:#ece8fb;border-radius:var(--radius-pill)}
+.viewer-stage{position:relative;overflow:hidden;min-height:440px;display:grid;place-items:center;background:#07050d;cursor:grab;user-select:none}
+.viewer-stage.dragging{cursor:grabbing}
+.viewer-image{max-width:none;max-height:none;transform-origin:center center;will-change:transform,filter;pointer-events:none}
+.viewer-placeholder{color:#9a93b4;text-align:center;padding:2rem}
+.viewer-info{padding:.9rem 1.1rem;background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm)}
+.instance-select{max-width:340px}
+.dicom-upload-card{margin-bottom:1rem}
+.dicom-upload-card input[type="file"]{padding:.55rem;background:#fff}
+.dicom-upload-card .text-danger{color:var(--danger);font-weight:700}
 @media(max-width:980px){.pacs-layout{grid-template-columns:1fr}.viewer-shell{min-height:440px}}
-.dicom-upload-card{margin-bottom:1rem}.dicom-upload-card input[type="file"]{padding:.55rem;background:#fff}.dicom-upload-card .text-danger{color:#a62f3a;font-weight:700}

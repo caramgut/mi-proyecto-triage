@@ -1,2 +1,25 @@
-.patient-workspace{display:grid;gap:1rem}.patient-search-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:1rem;box-shadow:var(--shadow)}.patient-header{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;padding:1.15rem;border:1px solid var(--border);background:#fff;border-radius:var(--radius);box-shadow:var(--shadow)}.patient-title{display:flex;gap:.9rem;align-items:center}.patient-avatar{width:54px;height:54px;border-radius:16px;background:#e7f3f5;color:var(--primary);display:grid;place-items:center;font-weight:900;font-size:1.1rem}.patient-title h2{margin:0}.patient-title p{margin:.25rem 0 0}.patient-tabs{display:flex;gap:.4rem;flex-wrap:wrap;background:#fff;border:1px solid var(--border);padding:.45rem;border-radius:13px}.patient-tab{border:0;background:transparent;padding:.65rem .9rem;border-radius:9px;font-weight:750;color:#51657a}.patient-tab.active{background:#e8f3f5;color:var(--primary)}.patient-panel{display:grid;gap:1rem}.detail-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.8rem}.detail-item{padding:.85rem;border-radius:11px;background:#f7f9fc;border:1px solid #e6edf4}.detail-item span{display:block;color:var(--muted);font-size:.75rem;margin-bottom:.25rem}.detail-item strong{font-size:.9rem;word-break:break-word}.triage-1{background:#fbe4e6;color:#a62f3a}.triage-2{background:#fff0df;color:#a55600}.triage-3{background:#fff7cf;color:#806300}.triage-4{background:#e5f3eb;color:#16745d}.triage-5{background:#e8f0fb;color:#345e9c}
-@media(max-width:900px){.detail-list{grid-template-columns:1fr}.patient-header{flex-direction:column}}
+/* paciente.css — ficha del paciente y niveles de triaje */
+.patient-workspace{display:grid;gap:1rem}
+.patient-search-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem;box-shadow:var(--shadow)}
+.patient-header{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;padding:1.25rem;border:1px solid var(--border);
+  background:linear-gradient(120deg,#fff,var(--lilac-50));border-radius:var(--radius);box-shadow:var(--shadow)}
+.patient-title{display:flex;gap:1rem;align-items:center}
+.patient-avatar{width:58px;height:58px;border-radius:50%;background:linear-gradient(145deg,var(--lilac-300),var(--lilac-500));color:#fff;display:grid;place-items:center;font-weight:800;font-size:1.1rem}
+.patient-title h2{margin:0}.patient-title p{margin:.25rem 0 0}
+.patient-tabs{display:flex;gap:.35rem;flex-wrap:wrap;background:#fff;border:1px solid var(--border);padding:.4rem;border-radius:var(--radius-pill);box-shadow:var(--shadow)}
+.patient-tab{border:0;background:transparent;padding:.6rem 1.05rem;border-radius:var(--radius-pill);font-weight:650;font-size:.88rem;color:var(--muted);transition:background .15s,color .15s}
+.patient-tab:hover{background:var(--lilac-100);color:var(--ink)}
+.patient-tab.active{background:var(--ink);color:#fff}
+.patient-panel{display:grid;gap:1rem}
+.detail-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.7rem}
+.detail-item{padding:.85rem 1rem;border-radius:var(--radius-sm);background:#fff;border:1px solid var(--border)}
+.detail-item span{display:block;color:var(--muted);font-size:.76rem;margin-bottom:.2rem;font-weight:500}
+.detail-item strong{font-size:.92rem;word-break:break-word}
+/* Triaje 1–5: rojo → azul (convención clínica), en tonos suaves con punto de nivel */
+.triage-1{background:#fde4e7;color:#b3202f}
+.triage-2{background:#ffe9d6;color:#b04e00}
+.triage-3{background:#fff4c2;color:#7a5f00}
+.triage-4{background:#dcf5e8;color:#157a52}
+.triage-5{background:#e3ecfd;color:#2d5bb0}
+.badge[class*="triage-"]::before{width:8px;height:8px;opacity:1}
+@media(max-width:900px){.detail-list{grid-template-columns:1fr}.patient-header{flex-direction:column}.patient-tabs{border-radius:var(--radius)}}
