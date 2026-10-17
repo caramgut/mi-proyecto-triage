@@ -411,11 +411,57 @@ def aprobar_reporte(id_reporte: int, data: Revision | None = Body(default=None),
     reporte = _revisar(id_reporte, "aprobado", "APROBAR_REPORTE", data, db, u)
     reporte["factura"] = None
     if facturar_reporte_ia:
-        # R19: la factura se crea sola. Si MongoDB falla, el reporte ya quedó aprobado y se registra el error.
+        # R19: aprobar el reporte crea una factura Mongo ligada por reporte_id, sin botón intermedio.
         try:
-            reporte["factura"] = facturar_reporte_ia(paciente_id=reporte["id_paciente"],
-                                                     reporte_id=reporte["id_reporte"],
-                                                     usuario=u["numero_documento_usuario"])
+            factura = facturar_reporte_ia(
+                paciente_id=reporte["id_paciente"],
+                reporte_id=reporte["id_reporte"],
+                usuario=u["numero_documento_usuario"],
+                id_encuentro=reporte["id_encuentro"],
+            )
+            reporte["factura"] = factura
+
+            # R13: la factura automática también queda auditada en PostgreSQL.
+            if not factura.get("duplicada"):
+                cur = db.cursor()
+                try:
+                    registrar_auditoria(
+                        cur,
+                        "facturas",
+                        factura["id"],
+                        "CREAR",
+                        u["numero_documento_usuario"],
+                        nuevos={
+                            "id": factura["id"],
+                            "paciente_id": factura["paciente_id"],
+                            "reporte_id": factura["reporte_id"],
+                            "servicio": factura["servicio"],
+                            "valor": factura["valor"],
+                            "estado_pago": factura["estado_pago"],
+                            "origen": factura["origen"],
+                        },
+                    )
+                    db.commit()
+                except Exception:
+                    db.rollback()
+                    log.exception("No se pudo auditar la factura automática del reporte %s", id_reporte)
+                finally:
+                    cur.close()
+
+                # R16/R19: el Contable ve aparecer la factura sin recargar.
+                destinatarios = usuarios_por_rol(db, "Contable", "Admin")
+                publicar(
+                    db,
+                    destinatarios,
+                    "factura_ia_creada",
+                    f"Factura automática creada por aprobación del reporte IA #{id_reporte}",
+                    paciente_id=reporte["id_paciente"],
+                    datos={
+                        "factura_id": factura["id"],
+                        "reporte_id": reporte["id_reporte"],
+                        "valor": factura["valor"],
+                    },
+                )
         except Exception:
             log.exception("No se pudo crear la factura del reporte %s", id_reporte)
     return reporte

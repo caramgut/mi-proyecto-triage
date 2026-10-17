@@ -41,6 +41,7 @@ clínico no llega al paciente ni al contable (alcance por rol, R17).
 | `alerta_critica` | El mismo análisis, cuando el modelo marca alerta: P(crítico) ≥ 0,38 **o** red de seguridad (SpO2 < 88 % o PAS < 90 mmHg) | Los mismos destinatarios del reporte | Se crea la alerta `activa`, sube `alertas_activas` y aparece el aviso persistente hasta que se reconoce |
 | `alerta_critica_escalada` | El sistema (hilo de la API), si la alerta sigue `activa` después de `ALERTA_ESCALAR_MINUTOS` (5 por defecto) | Todos los admin | La alerta queda abierta para cualquier médico. Se audita `ESCALAR_ALERTA` con origen `SISTEMA` |
 | `alerta_reconocida` | `PATCH /alertas/{id}/reconocer` | El destinatario (o todos los médicos si no tenía), quien la reconoció y, si estaba escalada, los admin | El aviso persistente desaparece en todas sus pantallas abiertas; baja `alertas_activas` |
+| `factura_ia_creada` | Un Médico/Especialista aprueba un reporte IA | Contable y Admin | Se crea automáticamente la factura en MongoDB, ligada por `reporte_id`; la vista de facturación se refresca sin recargar |
 
 Paciente y Contable no reciben ninguno de estos eventos, ni ven ni reconocen alertas (403).
 
@@ -55,3 +56,9 @@ Paciente y Contable no reciben ninguno de estos eventos, ni ven ni reconocen ale
 ## Pendiente de documentar
 
 - Aprobación de reporte IA → factura en MongoDB con `reporte_id` (R10, R19).
+
+### Mejora adicional · `remision_finalizada`
+- **Disparador:** el especialista marca como terminada una remisión previamente aceptada.
+- **Destinatario:** únicamente el médico remitente.
+- **Reacción:** notificación persistente + evento SSE para informar que la valoración especializada terminó y que el médico puede revisar el caso antes de cerrar el encuentro.
+- **Nota:** este evento es adicional; no reemplaza el flujo obligatorio R19 `remision_aceptada`.

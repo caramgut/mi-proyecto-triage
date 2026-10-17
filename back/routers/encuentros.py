@@ -124,6 +124,34 @@ def mis_encuentros(db=Depends(get_db),u=Depends(requerir_roles("Paciente"))):
     finally:
         cur.close()
 
+@router.get("/encuentros/urgencias/activos",tags=["Encuentros"])
+def cola_urgencias(db=Depends(get_db),u=Depends(requerir_roles("Admin","Medico"))):
+    """Cola operativa de urgencias basada en encuentros activos.
+
+    No crea una entidad artificial de "turno": el encuentro clínico abierto es
+    el ingreso a Urgencias. Se prioriza por nivel de triage cuando existe y,
+    mientras está pendiente, por orden de llegada.
+    """
+    cur=db.cursor(cursor_factory=RealDictCursor)
+    try:
+        cur.execute("""
+            SELECT e.*,p.nombres,p.apellidos,p.tipo_documento,
+                   um.username AS medico_username,um.nombres AS medico_nombres,
+                   um.apellidos AS medico_apellidos
+            FROM encuentros e
+            JOIN pacientes p ON p.numero_documento_paciente=e.id_paciente
+            LEFT JOIN usuarios um ON um.numero_documento_usuario=e.medico_responsable
+            WHERE e.is_deleted=FALSE
+              AND e.estado<> 'finalizado'
+              AND lower(COALESCE(e.tipo_encuentro,''))='urgencias'
+            ORDER BY
+              CASE WHEN e.nivel_triage IS NULL THEN 6 ELSE e.nivel_triage END ASC,
+              e.fecha_hora_ingreso ASC;
+        """)
+        return cur.fetchall()
+    finally:
+        cur.close()
+
 @router.get("/encuentros/{id_encuentro}",tags=["Encuentros"])
 def ver_encuentro(id_encuentro:int,db=Depends(get_db),u=Depends(requerir_roles("Admin","Medico","Especialista","Paciente"))):
     cur=db.cursor(cursor_factory=RealDictCursor)

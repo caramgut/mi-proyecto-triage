@@ -13,3 +13,5 @@ pass.env
 **/pass.env
 !**/*.example
 !**/example.*
+historias_clinicas/*.pdf
+!historias_clinicas/.gitkeep

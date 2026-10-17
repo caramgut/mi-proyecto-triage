@@ -89,6 +89,8 @@ services:
       ALERTA_ESCALAR_MINUTOS: ${ALERTA_ESCALAR_MINUTOS:-5}
     ports:
     - 8000:8000
+    volumes:
+    - ./historias_clinicas:/app/historias_clinicas
     depends_on:
       hapi-fhir:
         condition: service_started

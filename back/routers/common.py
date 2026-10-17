@@ -59,7 +59,7 @@ def obtener_encuentro(cursor,id_encuentro,incluir_eliminado=True):
 def exigir_especialista_remitido(cursor,id_paciente,u,id_encuentro=None,solo_aceptada=True):
     if u["rol"]!="Especialista":
         return
-    estados=("aceptada",) if solo_aceptada else ("pendiente","aceptada")
+    estados=("aceptada","finalizada") if solo_aceptada else ("pendiente","aceptada","finalizada")
     placeholders=",".join(["%s"]*len(estados))
     params=[id_paciente,u["numero_documento_usuario"],*estados]
     filtro_encuentro=""
@@ -79,7 +79,7 @@ def exigir_especialista_remitido(cursor,id_paciente,u,id_encuentro=None,solo_ace
         params
     )
     if not cursor.fetchone():
-        raise HTTPException(status_code=403,detail="El especialista solo puede acceder a pacientes con remisión aceptada")
+        raise HTTPException(status_code=403,detail="El especialista solo puede acceder a pacientes con remisión aceptada o finalizada")
 
 def exigir_acceso_encuentro(cursor,encuentro,u):
     if not encuentro:

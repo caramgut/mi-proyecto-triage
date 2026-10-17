@@ -1,190 +1,171 @@
-from decimal import Decimal
+import logging
 
-from fastapi import APIRouter,Depends,HTTPException
-from psycopg2.errors import UniqueViolation
+from fastapi import APIRouter, Depends, HTTPException, status
 from psycopg2.extras import RealDictCursor
-from pydantic import BaseModel,Field
+from pydantic import BaseModel, Field
+from pymongo.errors import PyMongoError
 
 from auth.service import requerir_roles
 from core.database import get_db
-from routers.common import obtener_encuentro,registrar_auditoria
+from routers.common import registrar_auditoria
+from services.facturacion_ia import (
+    crear_factura_manual,
+    listar_facturas as mongo_listar_facturas,
+    obtener_factura as mongo_obtener_factura,
+    actualizar_estado_factura as mongo_actualizar_estado_factura,
+    ping_mongo,
+)
 
-router=APIRouter()
+router = APIRouter(tags=["Facturación"])
+log = logging.getLogger("facturacion")
 
-class DetalleAdicional(BaseModel):
-    concepto:str=Field(max_length=200)
-    cantidad:int=Field(default=1,gt=0)
-    valor_unitario:Decimal=Field(ge=0)
+
+class FacturaEstadoUpdate(BaseModel):
+    estado_pago: str = Field(pattern="^(pendiente|pagada|anulada)$")
+
 
 class FacturaCreate(BaseModel):
-    id_encuentro:int
-    numero_factura:str=Field(max_length=50)
-    concepto:str|None=None
-    incluir_prescripciones_dispensadas:bool=True
-    incluir_examenes_completados:bool=True
-    detalles_adicionales:list[DetalleAdicional]=Field(default_factory=list)
+    paciente_id: int
+    servicio: str = Field(min_length=2, max_length=80)
+    valor: float = Field(ge=0)
+    descripcion: str | None = Field(default=None, max_length=500)
+    estado_pago: str = Field(default="pendiente", pattern="^(pendiente|pagada|anulada)$")
+    numero_factura: str | None = Field(default=None, max_length=50)
+    id_encuentro: int | None = Field(default=None, ge=1)
 
-@router.post("/facturas",tags=["Facturación"],status_code=201)
-def crear_factura(data:FacturaCreate,db=Depends(get_db),u=Depends(requerir_roles("Admin","Contable"))):
-    cur=db.cursor(cursor_factory=RealDictCursor)
 
-    try:
-        e=obtener_encuentro(cur,data.id_encuentro,False)
+def _validar_paciente_y_encuentro(cur, data: FacturaCreate) -> None:
+    cur.execute(
+        """
+        SELECT 1 FROM pacientes
+        WHERE numero_documento_paciente=%s AND is_deleted=FALSE;
+        """,
+        (data.paciente_id,),
+    )
+    if not cur.fetchone():
+        raise HTTPException(status_code=404, detail="Paciente no encontrado")
 
-        if not e:
-            raise HTTPException(status_code=404,detail="Encuentro no encontrado")
-
-        if e["estado"]!="finalizado":
-            raise HTTPException(status_code=409,detail="Solo se factura un encuentro finalizado")
-
-        cur.execute("""
-            INSERT INTO facturas(
-                id_paciente,id_encuentro,numero_factura,
-                concepto,total,creado_por
+    if data.id_encuentro is not None:
+        cur.execute(
+            """
+            SELECT 1 FROM encuentros
+            WHERE id_encuentro=%s AND id_paciente=%s AND is_deleted=FALSE;
+            """,
+            (data.id_encuentro, data.paciente_id),
+        )
+        if not cur.fetchone():
+            raise HTTPException(
+                status_code=404,
+                detail="El encuentro no existe o no pertenece al paciente",
             )
-            VALUES(%s,%s,%s,%s,0,%s)
-            RETURNING *;
-        """,(
-            e["id_paciente"],e["id_encuentro"],
-            data.numero_factura,data.concepto,
-            u["numero_documento_usuario"]
-        ))
 
-        f=cur.fetchone()
-        detalles=[]
 
-        if data.incluir_prescripciones_dispensadas:
-            cur.execute("""
-                SELECT
-                    pr.id_prescripcion,pr.cantidad,
-                    m.nombre,m.precio_unitario
-                FROM prescripciones pr
-                JOIN medicamentos m ON m.codigo_cum=pr.codigo_cum
-                WHERE pr.id_encuentro=%s
-                  AND pr.estado='dispensada'
-                  AND pr.is_deleted=FALSE;
-            """,(e["id_encuentro"],))
+@router.get("/facturas/estado-mongo")
+def estado_mongo(u=Depends(requerir_roles("Admin", "Contable"))):
+    try:
+        ping_mongo()
+        return {"status": "ok", "base": "triaje", "coleccion": "facturas"}
+    except PyMongoError as exc:
+        raise HTTPException(status_code=503, detail="MongoDB no disponible") from exc
 
-            for pr in cur.fetchall():
-                detalles.append((
-                    pr["id_prescripcion"],None,
-                    f"Medicamento: {pr['nombre']}",
-                    pr["cantidad"],pr["precio_unitario"]
-                ))
 
-        if data.incluir_examenes_completados:
-            cur.execute("""
-                SELECT id_examen,nombre
-                FROM examenes
-                WHERE id_encuentro=%s
-                  AND estado='completed'
-                  AND is_deleted=FALSE;
-            """,(e["id_encuentro"],))
-
-            for ex in cur.fetchall():
-                detalles.append((
-                    None,ex["id_examen"],
-                    f"Examen: {ex['nombre']}",
-                    1,Decimal("0")
-                ))
-
-        for d in data.detalles_adicionales:
-            detalles.append((
-                None,None,d.concepto,
-                d.cantidad,d.valor_unitario
-            ))
-
-        total=Decimal("0")
-
-        for idp,idx,concepto,cantidad,valor in detalles:
-            vt=Decimal(cantidad)*Decimal(valor)
-            total+=vt
-
-            cur.execute("""
-                INSERT INTO factura_detalle(
-                    id_factura,id_encuentro,id_prescripcion,id_examen,
-                    concepto,cantidad,valor_unitario,valor_total,creado_por
-                )
-                VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s);
-            """,(
-                f["id_factura"],e["id_encuentro"],
-                idp,idx,concepto,cantidad,
-                valor,vt,u["numero_documento_usuario"]
-            ))
-
-        cur.execute("""
-            UPDATE facturas
-            SET total=%s,
-                updated_at=now()
-            WHERE id_factura=%s
-            RETURNING *;
-        """,(total,f["id_factura"]))
-
-        nuevo=cur.fetchone()
+@router.post("/facturas", status_code=status.HTTP_201_CREATED)
+def crear_factura(
+    data: FacturaCreate,
+    db=Depends(get_db),
+    u=Depends(requerir_roles("Admin", "Contable")),
+):
+    cur = db.cursor(cursor_factory=RealDictCursor)
+    try:
+        _validar_paciente_y_encuentro(cur, data)
+        try:
+            factura = crear_factura_manual(
+                paciente_id=data.paciente_id,
+                servicio=data.servicio.strip(),
+                valor=data.valor,
+                usuario=u["numero_documento_usuario"],
+                descripcion=(data.descripcion or "").strip() or None,
+                estado_pago=data.estado_pago,
+                numero_factura=(data.numero_factura or "").strip() or None,
+                id_encuentro=data.id_encuentro,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except PyMongoError as exc:
+            raise HTTPException(status_code=503, detail="No fue posible guardar la factura en MongoDB") from exc
 
         registrar_auditoria(
-            cur,"facturas",nuevo["id_factura"],"CREAR",
-            u["numero_documento_usuario"],nuevos=nuevo
+            cur,
+            "facturas",
+            factura["id"],
+            "CREAR",
+            u["numero_documento_usuario"],
+            nuevos={
+                "id": factura["id"],
+                "paciente_id": factura["paciente_id"],
+                "servicio": factura["servicio"],
+                "valor": factura["valor"],
+                "estado_pago": factura["estado_pago"],
+                "origen": factura["origen"],
+            },
         )
-
         db.commit()
-        return nuevo
-
-    except UniqueViolation:
+        return factura
+    except HTTPException:
         db.rollback()
-        raise HTTPException(
-            status_code=409,
-            detail="Ya existe una factura activa para el encuentro o el número está repetido"
-        )
-    except:
+        raise
+    except Exception:
         db.rollback()
         raise
     finally:
         cur.close()
 
-@router.get("/facturas",tags=["Facturación"])
-def listar_facturas(db=Depends(get_db),u=Depends(requerir_roles("Admin","Contable"))):
-    cur=db.cursor(cursor_factory=RealDictCursor)
 
+@router.get("/facturas")
+def listar_facturas(u=Depends(requerir_roles("Admin", "Contable"))):
     try:
-        cur.execute("""
-            SELECT *
-            FROM facturas
-            WHERE is_deleted=FALSE
-            ORDER BY fecha_emision DESC;
-        """)
-        return cur.fetchall()
-    finally:
-        cur.close()
+        return mongo_listar_facturas()
+    except PyMongoError as exc:
+        raise HTTPException(status_code=503, detail="MongoDB no disponible") from exc
 
-@router.get("/facturas/{id_factura}",tags=["Facturación"])
-def ver_factura(id_factura:int,db=Depends(get_db),u=Depends(requerir_roles("Admin","Contable"))):
-    cur=db.cursor(cursor_factory=RealDictCursor)
 
+@router.get("/facturas/{id_factura}")
+def ver_factura(id_factura: str, u=Depends(requerir_roles("Admin", "Contable"))):
     try:
-        cur.execute("""
-            SELECT *
-            FROM facturas
-            WHERE id_factura=%s
-              AND is_deleted=FALSE;
-        """,(id_factura,))
+        factura = mongo_obtener_factura(id_factura)
+    except PyMongoError as exc:
+        raise HTTPException(status_code=503, detail="MongoDB no disponible") from exc
+    if not factura:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+    return factura
 
-        f=cur.fetchone()
 
-        if not f:
+@router.patch("/facturas/{id_factura}/estado")
+def actualizar_estado_factura(
+    id_factura:str,
+    data:FacturaEstadoUpdate,
+    db=Depends(get_db),
+    u=Depends(requerir_roles("Admin","Contable")),
+):
+    cur=db.cursor(cursor_factory=RealDictCursor)
+    try:
+        anterior=mongo_obtener_factura(id_factura)
+        if not anterior:
             raise HTTPException(status_code=404,detail="Factura no encontrada")
-
-        cur.execute("""
-            SELECT *
-            FROM factura_detalle
-            WHERE id_factura=%s
-              AND is_deleted=FALSE
-            ORDER BY id_detalle;
-        """,(id_factura,))
-
-        d=dict(f)
-        d["detalles"]=cur.fetchall()
-        return d
-
+        try:
+            factura=mongo_actualizar_estado_factura(id_factura,data.estado_pago,u["numero_documento_usuario"])
+        except PyMongoError as exc:
+            raise HTTPException(status_code=503,detail="No fue posible actualizar la factura en MongoDB") from exc
+        registrar_auditoria(
+            cur,"facturas",id_factura,"EDITAR",u["numero_documento_usuario"],
+            anteriores={"estado_pago":anterior.get("estado_pago")},
+            nuevos={"estado_pago":factura.get("estado_pago"),"paciente_id":factura.get("paciente_id"),"origen":factura.get("origen")}
+        )
+        db.commit()
+        return factura
+    except HTTPException:
+        db.rollback();raise
+    except Exception:
+        db.rollback();raise
     finally:
         cur.close()

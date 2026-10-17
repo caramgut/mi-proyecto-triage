@@ -23,6 +23,14 @@ class UsuarioCreate(BaseModel):
     email:str|None=None
     telefono:str|None=Field(default=None,max_length=30)
     id_especialidad:int|None=None
+    # Campos clínicos opcionales usados solo cuando el rol es Paciente.
+    # Permiten que crear la cuenta también cree su ficha clínica si aún no existe.
+    tipo_documento:str|None=Field(default=None,max_length=20)
+    fecha_nacimiento:str|None=None
+    genero_fhir:str|None=None
+    direccion:str|None=Field(default=None,max_length=200)
+    municipio_residencia:str|None=Field(default=None,max_length=100)
+    zona_residencia:str|None=None
 
 class UsuarioUpdate(BaseModel):
     username:str|None=Field(default=None,min_length=3,max_length=50,pattern=r"^[A-Za-z0-9._-]+$")
@@ -55,33 +63,57 @@ def _asignar_especialidad(cur,documento:int,rol_id:int,id_especialidad:int|None)
     cur.execute("DELETE FROM usuario_especialidades WHERE numero_documento_usuario=%s;",(documento,))
     cur.execute("INSERT INTO usuario_especialidades(numero_documento_usuario,id_especialidad) VALUES(%s,%s);",(documento,id_especialidad))
 
-def vincular_paciente(cur,documento,rol_id,admin_doc):
-    """Si el usuario es Paciente y ya existe un registro clínico con su mismo
-    documento sin cuenta, lo vincula para que vea su historia."""
-    cur.execute("SELECT nombre FROM roles WHERE id_rol=%s;",(rol_id,))
+def asegurar_paciente_para_cuenta(cur,data,admin_doc):
+    """Para una cuenta con rol Paciente garantiza que exista la ficha clínica.
+
+    - Si la ficha ya existe sin cuenta, la vincula.
+    - Si no existe, la crea con el mismo documento y la vincula.
+    La atención clínica NO depende de tener cuenta: un médico puede crear la ficha
+    por separado para pacientes que llegan a urgencias sin acceso al portal.
+    """
+    cur.execute("SELECT nombre FROM roles WHERE id_rol=%s;",(data.id_rol,))
     r=cur.fetchone()
     if not r or r["nombre"]!="Paciente":
-        return False
+        return {"vinculado":False,"creado":False}
 
     cur.execute("""
-        UPDATE pacientes
-        SET id_usuario=%s,
-            updated_at=now()
-        WHERE numero_documento_paciente=%s
-          AND id_usuario IS NULL
-          AND is_deleted=FALSE
-        RETURNING *;
-    """,(documento,documento))
+        SELECT * FROM pacientes
+        WHERE numero_documento_paciente=%s AND is_deleted=FALSE;
+    """,(data.numero_documento_usuario,))
     p=cur.fetchone()
 
-    if not p:
-        return False
+    if p:
+        if p.get("id_usuario") not in (None,data.numero_documento_usuario):
+            raise HTTPException(status_code=409,detail="La ficha clínica ya está vinculada a otra cuenta")
+        if p.get("id_usuario") is None:
+            cur.execute("""
+                UPDATE pacientes SET id_usuario=%s,updated_at=now()
+                WHERE numero_documento_paciente=%s
+                RETURNING *;
+            """,(data.numero_documento_usuario,data.numero_documento_usuario))
+            p=cur.fetchone()
+            registrar_auditoria(cur,"pacientes",data.numero_documento_usuario,"VINCULAR_CUENTA",admin_doc,nuevos=p)
+        return {"vinculado":True,"creado":False}
 
-    registrar_auditoria(
-        cur,"pacientes",documento,"VINCULAR_CUENTA",
-        admin_doc,nuevos=p
-    )
-    return True
+    if not data.tipo_documento:
+        raise HTTPException(status_code=400,detail="Para crear una cuenta Paciente nueva debe indicar tipo_documento")
+
+    genero=data.genero_fhir if data.genero_fhir in (None,"male","female","other","unknown") else None
+    zona=data.zona_residencia if data.zona_residencia in (None,"urbana","rural_dispersa") else None
+    cur.execute("""
+        INSERT INTO pacientes(
+            numero_documento_paciente,id_usuario,tipo_documento,nombres,apellidos,
+            fecha_nacimiento,genero_fhir,telefono,direccion,municipio_residencia,zona_residencia
+        ) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        RETURNING *;
+    """,(
+        data.numero_documento_usuario,data.numero_documento_usuario,data.tipo_documento,
+        data.nombres,data.apellidos,data.fecha_nacimiento or None,genero,data.telefono,
+        data.direccion,data.municipio_residencia,zona
+    ))
+    p=cur.fetchone()
+    registrar_auditoria(cur,"pacientes",data.numero_documento_usuario,"CREAR",admin_doc,nuevos=p)
+    return {"vinculado":True,"creado":True}
 
 @router.post("/usuarios",tags=["Usuarios"],status_code=201)
 def crear_usuario(data:UsuarioCreate,db=Depends(get_db),u=Depends(requerir_roles("Admin"))):
@@ -111,15 +143,15 @@ def crear_usuario(data:UsuarioCreate,db=Depends(get_db),u=Depends(requerir_roles
         )
 
         _asignar_especialidad(cur,data.numero_documento_usuario,data.id_rol,data.id_especialidad)
-        vinculado=vincular_paciente(
-            cur,data.numero_documento_usuario,data.id_rol,
-            u["numero_documento_usuario"]
+        paciente_info=asegurar_paciente_para_cuenta(
+            cur,data,u["numero_documento_usuario"]
         )
         db.commit()
 
         d=dict(nuevo)
         d.pop("password_hash",None)
-        d["paciente_vinculado"]=vinculado
+        d["paciente_vinculado"]=paciente_info["vinculado"]
+        d["paciente_creado"]=paciente_info["creado"]
         return d
 
     except UniqueViolation:
@@ -139,6 +171,7 @@ def listar_usuarios(db=Depends(get_db),u=Depends(requerir_roles("Admin"))):
             SELECT
                 u.numero_documento_usuario,u.username,u.nombres,u.apellidos,
                 u.email,u.telefono,u.estado,u.is_deleted,r.nombre AS rol,
+                EXISTS(SELECT 1 FROM pacientes p WHERE p.numero_documento_paciente=u.numero_documento_usuario AND p.is_deleted=FALSE) AS paciente_registrado,
                 COALESCE(string_agg(e.nombre, ', ' ORDER BY e.nombre),'') AS especialidades
             FROM usuarios u
             JOIN roles r ON r.id_rol=u.id_rol
@@ -159,6 +192,7 @@ def ver_usuario(documento:int,db=Depends(get_db),u=Depends(requerir_roles("Admin
             SELECT
                 u.numero_documento_usuario,u.username,u.nombres,u.apellidos,
                 u.email,u.telefono,u.estado,u.is_deleted,r.nombre AS rol,
+                EXISTS(SELECT 1 FROM pacientes p WHERE p.numero_documento_paciente=u.numero_documento_usuario AND p.is_deleted=FALSE) AS paciente_registrado,
                 COALESCE(string_agg(e.nombre, ', ' ORDER BY e.nombre),'') AS especialidades
             FROM usuarios u
             JOIN roles r ON r.id_rol=u.id_rol

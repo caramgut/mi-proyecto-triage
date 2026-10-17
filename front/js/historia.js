@@ -1,4 +1,4 @@
-import {apiGet} from "./api.js";
+import {apiGet,apiBlob} from "./api.js";
 import {escapeHtml,formatDate,triageBadge} from "./ui.js";
 import {renderHistoriaToolbar,bindHistoriaToolbar,encounterActionsHtml,deleteButtonHtml,bindEncounterActions} from "./encuentro.js";
 
@@ -12,7 +12,16 @@ export async function renderHistoria(documento,container){
   try{
     const h=await apiGet(`/pacientes/${documento}/historia-clinica`); const encounters=h.encuentros||[];
     const obs=encounters.reduce((a,e)=>a+(e.observaciones?.length||0),0), dx=encounters.reduce((a,e)=>a+(e.diagnosticos?.length||0),0), exams=encounters.reduce((a,e)=>a+(e.examenes?.length||0),0);
-    container.innerHTML=`<div class="history-summary"><div class="metric"><strong>${encounters.length}</strong><span>Encuentros</span></div><div class="metric"><strong>${obs}</strong><span>Observaciones</span></div><div class="metric"><strong>${dx}</strong><span>Diagnósticos</span></div><div class="metric"><strong>${exams}</strong><span>Exámenes</span></div></div><div class="card"><div class="section-head"><h3>Antecedentes</h3></div>${list(h.antecedentes,a=>`<div class="compact-row"><strong>${val(a.tipo_antecedente||a.tipo||"Antecedente")}</strong> · ${val(a.descripcion||a.detalle||"")} <span class="muted">${formatDate(a.fecha_registro)}</span></div>`)}</div><div class="section-head"><h3>Encuentros clínicos</h3>${renderHistoriaToolbar(documento,refresh)}</div><div class="history-timeline">${encounters.length?encounters.map(renderEncounter).join(""):'<div class="empty-state">No hay encuentros clínicos registrados.</div>'}</div>`;
+    const reportes=h.reportes_ia||[];
+    container.innerHTML=`<div class="history-summary"><div class="metric"><strong>${encounters.length}</strong><span>Encuentros</span></div><div class="metric"><strong>${obs}</strong><span>Observaciones</span></div><div class="metric"><strong>${dx}</strong><span>Diagnósticos</span></div><div class="metric"><strong>${exams}</strong><span>Exámenes</span></div></div><div class="card"><div class="section-head"><h3>Antecedentes</h3><button id="descargar-historia-pdf" class="btn btn-secondary" type="button">Descargar PDF</button></div>${list(h.antecedentes,a=>`<div class="compact-row"><strong>${val(a.tipo_antecedente||a.tipo||"Antecedente")}</strong> · ${val(a.descripcion||a.detalle||"")} <span class="muted">${formatDate(a.fecha_registro)}</span></div>`)}</div><div class="card"><div class="section-head"><h3>Reportes IA aprobados</h3><span class="badge success">${reportes.length}</span></div>${list(reportes,r=>`<div class="compact-row"><span><strong>Reporte #${val(r.id)}</strong> · ${val(r.categoria)} · P(crítico) ${val(r.p_critico)}${r.observaciones_clinico?`<br><span class="muted">${val(r.observaciones_clinico)}</span>`:""}</span></div>`)}</div><div class="section-head"><h3>Encuentros clínicos</h3>${renderHistoriaToolbar(documento,refresh)}</div><div class="history-timeline">${encounters.length?encounters.map(renderEncounter).join(""):'<div class="empty-state">No hay encuentros clínicos registrados.</div>'}</div>`;
+    container.querySelector("#descargar-historia-pdf")?.addEventListener("click",async()=>{
+      try{
+        const blob=await apiBlob(`/pacientes/${documento}/historia-clinica/pdf`);
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement("a");
+        a.href=url;a.download=`historia_${documento}.pdf`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+      }catch(err){container.insertAdjacentHTML("afterbegin",`<div class="error-box">${escapeHtml(err.message)}</div>`);}
+    });
     bindHistoriaToolbar(container,documento,refresh);
     bindEncounterActions(container,refresh);
   }catch(e){container.innerHTML=`<div class="error-box">${escapeHtml(e.message)}</div>`;}

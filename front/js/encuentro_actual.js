@@ -35,7 +35,7 @@ function reportCard(r){
 }
 
 function noEncounter(){
-  return `<div class="card flow-card"><div class="empty-state"><strong>No hay un encuentro activo</strong><p>Cuando el paciente llegue al hospital, inicie el encuentro para poder realizar el triage.</p>${isRole("Medico")?'<button id="btn-iniciar" class="btn btn-primary" type="button">+ Iniciar encuentro</button>':""}</div></div>`;
+  return `<div class="card flow-card"><div class="empty-state"><strong>No hay un encuentro activo</strong><p>El paciente ya está registrado clínicamente. Inicie la atención de Urgencias para abrir su encuentro y continuar con signos vitales, apoyo de IA y triage.</p>${isRole("Medico")?'<button id="btn-iniciar" class="btn btn-primary" type="button">+ Iniciar atención</button>':""}</div></div>`;
 }
 
 function lastVitals(obs){
