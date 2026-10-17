@@ -229,3 +229,54 @@ def rechazar_remision(id_remision:int,data:RemisionRespuesta,db=Depends(get_db),
         raise
     finally:
         cur.close()
+
+
+@router.patch("/remisiones/{id_remision}/finalizar",tags=["Remisiones"])
+def finalizar_remision(id_remision:int,data:RemisionRespuesta,db=Depends(get_db),u=Depends(requerir_roles("Especialista"))):
+    """Marca terminada la valoración del especialista y avisa al médico remitente.
+
+    Es un flujo adicional al R19: no cambia que la notificación obligatoria ocurra
+    al aceptar la remisión; añade el cierre clínico de la valoración especializada.
+    """
+    cur=db.cursor(cursor_factory=RealDictCursor)
+    try:
+        anterior=_obtener_remision(cur,id_remision)
+        if not anterior:
+            raise HTTPException(status_code=404,detail="Remisión no encontrada")
+        if anterior["especialista_destino"]!=u["numero_documento_usuario"]:
+            raise HTTPException(status_code=403,detail="La remisión pertenece a otro especialista")
+        if anterior["estado"]!="aceptada":
+            raise HTTPException(status_code=409,detail="Solo una remisión aceptada puede finalizarse")
+        cur.execute("""
+            UPDATE remisiones
+            SET estado='finalizada',
+                observacion_respuesta=COALESCE(%s,observacion_respuesta),
+                updated_at=now()
+            WHERE id_remision=%s RETURNING *;
+        """,(data.observacion,id_remision))
+        nuevo=cur.fetchone()
+        registrar_auditoria(cur,"remisiones",id_remision,"FINALIZAR",u["numero_documento_usuario"],anterior,nuevo)
+        db.commit()
+        publicar(
+            db,[anterior["medico_remitente"]],
+            tipo="remision_finalizada",
+            mensaje=(
+                f"{anterior['especialista_nombres']} {anterior['especialista_apellidos']} "
+                f"finalizó la valoración de {anterior['paciente_nombres']} "
+                f"{anterior['paciente_apellidos']} en {anterior['especialidad']}"
+            ),
+            paciente_id=anterior["id_paciente"],
+            datos={
+                "remision_id":id_remision,
+                "id_encuentro":anterior["id_encuentro"],
+                "especialidad":anterior["especialidad"],
+                "observacion":data.observacion,
+                "puede_revisar_cierre_encuentro":True,
+            },
+        )
+        return {"id":id_remision,"estado":"finalizada"}
+    except:
+        db.rollback()
+        raise
+    finally:
+        cur.close()

@@ -2,6 +2,7 @@ import {apiGet} from "./api.js";
 import {isRole} from "./auth.js";
 import {escapeHtml,formatDate,triageBadge} from "./ui.js";
 import {nuevoEncuentroModal,bindEncounterActions,deleteButtonHtml,VITALES} from "./encuentro.js";
+import {abrirTriajeIA} from "./ia_triaje.js";
 
 const val=v=>escapeHtml(v??"—");
 const NIVELES={1:"Resucitación · atención inmediata",2:"Emergencia",3:"Urgente",4:"Menos urgente",5:"No urgente"};
@@ -19,6 +20,11 @@ export async function renderEncuentroActual(documento,container){
     const enc=(h.encuentros||[]).find(e=>e.estado!=="finalizado")||null;
     container.innerHTML=`${reportCard(reporte)}${enc?encounterView(enc,reporte):noEncounter()}`;
     container.querySelector("#btn-iniciar")?.addEventListener("click",()=>nuevoEncuentroModal(documento,refresh));
+    // Triage asistido por IA: primero los signos vitales, luego la sugerencia que el médico acepta o rechaza
+    container.querySelector("[data-triage-ia]")?.addEventListener("click",()=>{
+      const tieneVitales=VITALES.some(v=>(enc.observaciones||[]).some(o=>o.codigo_loinc===v.loinc));
+      abrirTriajeIA(enc,{tieneVitales,onDone:refresh});
+    });
     bindEncounterActions(container,refresh);
   }catch(e){container.innerHTML=`<div class="error-box">${escapeHtml(e.message)}</div>`;}
 }
@@ -29,7 +35,7 @@ function reportCard(r){
 }
 
 function noEncounter(){
-  return `<div class="card flow-card"><div class="empty-state"><strong>No hay un encuentro activo</strong><p>Cuando el paciente llegue al hospital, inicie el encuentro para poder realizar el triage.</p>${isRole("Medico")?'<button id="btn-iniciar" class="btn btn-primary" type="button">+ Iniciar encuentro</button>':""}</div></div>`;
+  return `<div class="card flow-card"><div class="empty-state"><strong>No hay un encuentro activo</strong><p>El paciente ya está registrado clínicamente. Inicie la atención de Urgencias para abrir su encuentro y continuar con signos vitales, apoyo de IA y triage.</p>${isRole("Medico")?'<button id="btn-iniciar" class="btn btn-primary" type="button">+ Iniciar atención</button>':""}</div></div>`;
 }
 
 function lastVitals(obs){
@@ -44,10 +50,11 @@ function encounterView(e,reporte){
   const otras=obs.filter(o=>!vitCodes.has(o.codigo_loinc));
   const tieneTriage=!!e.nivel_triage, tieneVit=VITALES.some(v=>vit[v.loinc]);
   const atencion=dx.length+notas.length+ex.length+rx.length;
+  // Orden clínico: primero los signos vitales; con ellos la IA sugiere el triage
   const steps=[
     ["Reporte previo",!!reporte,false],
-    ["Triage",tieneTriage,!tieneTriage],
-    ["Signos vitales",tieneVit,tieneTriage&&!tieneVit],
+    ["Signos vitales",tieneVit,!tieneVit],
+    ["Triage",tieneTriage,tieneVit&&!tieneTriage],
     ["Atención clínica",atencion>0,tieneTriage&&tieneVit&&!atencion],
     ["Finalizar",false,tieneTriage&&tieneVit&&atencion>0],
   ];
@@ -59,14 +66,16 @@ function encounterView(e,reporte){
     <div class="flow-steps">${steps.map(([t,done,cur],i)=>`<div class="flow-step ${done?"done":""} ${cur?"current":""}"><span>${done?"✓":i+1}</span> ${t}</div>`).join("")}</div>
     <div class="clinical-block" style="margin-top:1rem"><h4>Motivo de consulta</h4><div>${val(e.motivo_consulta)}</div></div></div>
 
-  <div class="card flow-card"><div class="section-head"><h3>2 · Triage</h3>${btnMed("triage",tieneTriage?"Actualizar triage":"Realizar triage","btn-primary")}</div>
-    ${tieneTriage?`<div class="triage-panel">${triageBadge(e.nivel_triage)}<div><strong>Nivel ${e.nivel_triage} · ${NIVELES[e.nivel_triage]}</strong><div class="muted small-text">${e.dolor_escala!=null?`Dolor ${e.dolor_escala}/10 · `:""}Clasificado ${formatDate(e.fecha_hora_triage)}</div>${e.observaciones_triage?`<div class="small-text">${val(e.observaciones_triage)}</div>`:""}</div></div>`:'<div class="history-empty">Triage pendiente: revise el reporte previo, valore al paciente y asigne el nivel 1 a 5.</div>'}</div>
 
-  <div class="card flow-card"><div class="section-head"><h3>3 · Signos vitales</h3>${btnClinical("add-vitales","+ Registrar signos vitales")}</div>
+  <div class="card flow-card"><div class="section-head"><h3>2 · Signos vitales</h3>${btnClinical("add-vitales","+ Registrar signos vitales")}</div>
     ${tieneVit?`<div class="vitals-grid">${VITALES.filter(v=>vit[v.loinc]).map(v=>`<div class="metric"><strong>${val(vit[v.loinc].valor_numerico)} <small>${v.show}</small></strong><span>${v.label}</span></div>`).join("")}</div>`:'<div class="history-empty">Aún no hay signos vitales registrados.</div>'}
     ${otras.length?`<div class="compact-list" style="margin-top:.8rem">${otras.map(o=>`<div class="compact-row"><span><strong>${val(o.nombre)}</strong>: ${val(o.valor_numerico??o.valor_texto)} ${val(o.unidad||"")}</span>${deleteButtonHtml("observacion",o.id_observacion)}</div>`).join("")}</div>`:""}
     <div style="margin-top:.6rem">${btnClinical("add-obs","+ Otra observación","btn-ghost")}</div></div>
 
+  <div class="card flow-card"><div class="section-head"><h3>3 · Triage</h3>${btnMed("triage-ia",tieneTriage?"Actualizar triage":"Realizar triage","btn-primary")}</div>
+    ${tieneTriage?`<div class="triage-panel">${triageBadge(e.nivel_triage)}<div><strong>Nivel ${e.nivel_triage} · ${NIVELES[e.nivel_triage]}</strong>${e.clasificacion_automatica?' <span class="badge info">Sugerencia de IA aceptada</span>':""}<div class="muted small-text">${e.dolor_escala!=null?`Dolor ${e.dolor_escala}/10 · `:""}Clasificado ${formatDate(e.fecha_hora_triage)}</div>${e.observaciones_triage?`<div class="small-text">${val(e.observaciones_triage)}</div>`:""}</div></div>`:
+      tieneVit?'<div class="history-empty">Triage pendiente: la IA sugerirá la categoría con los signos vitales registrados; usted la acepta o la rechaza y asigna el nivel 1 a 5.</div>':
+      '<div class="history-empty">Registre primero los signos vitales (paso 2): con ellos la IA sugiere el triage.</div>'}</div>
   <div class="card flow-card"><div class="section-head"><h3>4 · Atención clínica</h3><div class="actions">${btnClinical("add-dx","+ Diagnóstico")}${btnClinical("add-nota","+ Nota")}${btnClinical("add-examen","+ Examen")}${btnClinical("add-rx","+ Prescripción")}</div></div>
     <div class="grid grid-2">
       ${block("Diagnósticos",dx,d=>`<strong>${val(d.codigo_cie10||"")}</strong> ${val(d.descripcion)} <span class="muted small-text">${val(d.tipo)}</span>`,"diagnostico","id_diagnostico")}

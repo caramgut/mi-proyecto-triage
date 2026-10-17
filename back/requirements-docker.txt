@@ -9,3 +9,5 @@ argon2-cffi
 PyJWT
 pwdlib[argon2]
 pydantic
+pymongo
+reportlab

@@ -27,6 +27,9 @@ from routers.catalogos import router as catalogos_router
 from routers.remisiones import router as remisiones_router
 from routers.eventos import router as eventos_router
 from routers.fhir_suscripcion import router as fhir_suscripcion_router, iniciar_registro_suscripcion
+from routers.ia import router as ia_router
+from routers.ia_reportes import router as ia_reportes_router
+from routers.alertas import router as alertas_router, iniciar_escalamiento
 
 
 app = FastAPI(
@@ -79,6 +82,9 @@ app.include_router(catalogos_router)
 app.include_router(remisiones_router)
 app.include_router(eventos_router)
 app.include_router(fhir_suscripcion_router)
+app.include_router(ia_router)
+app.include_router(ia_reportes_router)
+app.include_router(alertas_router)
 
 # SISTEMA
 
@@ -86,6 +92,7 @@ app.include_router(fhir_suscripcion_router)
 async def _iniciar_bus_eventos():
     configurar_loop(asyncio.get_running_loop())
     iniciar_registro_suscripcion()
+    iniciar_escalamiento()          # R20: revisa cada 30 s las alertas sin reconocer
 
 @app.get("/", tags=["Sistema"])
 def raiz():

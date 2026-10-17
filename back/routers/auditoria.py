@@ -12,7 +12,7 @@ TablaAuditoria=Literal[
     "usuarios","pacientes","antecedentes","reportes_previos",
     "encuentros","observaciones","diagnosticos","notas_clinicas",
     "examenes","medicamentos","prescripciones","facturas",
-    "factura_detalle","remisiones","fhir:Observation"
+    "factura_detalle","remisiones","fhir:Observation", "reportes_ia", "alertas"
 ]
 
 

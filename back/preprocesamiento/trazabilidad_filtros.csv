@@ -1,0 +1,6 @@
+paso,filas_afectadas,detalle
+filas de partida,14266,
+se quitan menores de 18 años,414,quedan 13852
+se quitan filas sin nivel de triaje (sin etiqueta),4437,quedan 9415
+se quitan filas con >= 3 de 6 signos vitales faltantes,98,quedan 9317
+se quitan duplicados exactos,13,quedan 9304

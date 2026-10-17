@@ -29,3 +29,9 @@ if not JWT_SECRET_KEY:
 # y se identifica con este secreto compartido.
 FHIR_HOOK_URL=os.getenv("FHIR_HOOK_URL","http://api:8000/fhir-hook")
 FHIR_HOOK_TOKEN=os.getenv("FHIR_HOOK_TOKEN")
+
+# Servicio de IA (contenedor ml). Solo la API habla con él.
+ML_URL=os.getenv("ML_URL","http://ml:8001").rstrip("/")
+ML_SERVICE_TOKEN=os.getenv("ML_SERVICE_TOKEN")
+SEUDONIMO_SECRETO = os.getenv("SEUDONIMO_SECRETO")
+ALERTA_ESCALAR_MINUTOS = int(os.getenv("ALERTA_ESCALAR_MINUTOS", "5"))

@@ -1,11 +1,13 @@
+import {apiGet} from "./api.js";
 import {login,logout,restoreSession,getCurrentUser,initials,isRole} from "./auth.js";
 import {startStatusMonitor,stopStatusMonitor} from "./status.js";
 import {renderPacienteWorkspace} from "./pacientes.js";
 import {renderUsuarios,renderSecurity,renderAuditoria} from "./admin.js";
 import {renderFacturacion} from "./facturacion.js";
+import {renderUrgencias} from "./urgencias.js";
 import {renderMisReportes,renderMisEncuentros} from "./paciente_portal.js";
 import {renderRemisiones,renderRemisionesEnviadas} from "./remisiones.js";
-import {showToast,escapeHtml} from "./ui.js";
+import {showToast,escapeHtml,enhanceTables} from "./ui.js";
 import {conectarCanal,desconectarCanal} from "./tiempo_real.js";          // NUEVO
 import {refrescarPendientes,pintarContadores} from "./pendientes.js";    // NUEVO
 import {renderNotificaciones} from "./notificaciones.js";                 // NUEVO
@@ -17,6 +19,9 @@ const msg=document.getElementById("login-mensaje");
 const main=document.getElementById("contenido-principal");
 const nav=document.getElementById("nav-principal");
 
+const tableObserver=new MutationObserver(()=>enhanceTables(main));
+tableObserver.observe(main,{childList:true,subtree:true});
+
 const TODOS=["Admin","Medico","Especialista","Contable","Paciente"];
 
 
@@ -26,6 +31,7 @@ const routes={
   inicio:{label:"Inicio",icon:"⌂",roles:TODOS,render:renderHome},
   notificaciones:{label:"Notificaciones",icon:"🔔",roles:TODOS,render:renderNotificaciones,
                   contador:"notificaciones_no_leidas",refrescarCon:["*"]},                    // NUEVO
+  urgencias:{label:"Urgencias",icon:"✚",roles:["Medico"],render:renderUrgencias},
   paciente:{label:"Paciente / Historia",icon:"♙",roles:["Medico"],render:c=>renderPacienteWorkspace(c)},
   remisionesEnviadas:{label:"Remisiones enviadas",icon:"↗",roles:["Medico"],render:renderRemisionesEnviadas},
   remisiones:{label:"Mis remisiones",icon:"↗",roles:["Especialista"],render:renderRemisiones,contador:"remisiones_recibidas"},                 // NUEVO
@@ -35,7 +41,7 @@ const routes={
   usuarios:{label:"Usuarios",icon:"⚙",roles:["Admin"],render:renderUsuarios},
   seguridad:{label:"Seguridad",icon:"🔒",roles:["Admin"],render:renderSecurity},
   auditoria:{label:"Auditoría",icon:"☷",roles:["Admin"],render:renderAuditoria},
-  facturacion:{label:"Facturación",icon:"$",roles:["Contable"],render:renderFacturacion},
+  facturacion:{label:"Facturación",icon:"$",roles:["Admin","Contable"],render:renderFacturacion,refrescarCon:["factura_ia_creada"]},
 };
 
 let vistaActual=null;   // NUEVO: para saber qué pantalla repintar cuando llega un evento
@@ -86,6 +92,7 @@ async function navigate(key){
   main.innerHTML="";
   try{
     await r.render(main);
+    enhanceTables(main);
     pintarContadores(main);   // NUEVO: la vista recién pintada puede traer data-contador
   }catch(e){
     main.innerHTML=`<div class="error-box">${escapeHtml(e.message)}</div>`;
@@ -105,7 +112,7 @@ async function renderHome(container){
   else if(isRole("Medico"))cards='<div class="metric"><strong>Pacientes</strong><span>Búsqueda por documento</span></div><div class="metric"><strong>Historia</strong><span>Eventos clínicos integrados</span></div><div class="metric"><strong>FHIR</strong><span>Sincronización clínica</span></div><div class="metric"><strong>PACS</strong><span>Visor de imágenes médicas</span></div>';
   else if(isRole("Especialista"))cards='<div class="metric"><strong>Remisiones</strong><span>Reciba, acepte y atienda pacientes remitidos</span></div><div class="metric"><strong>Historia clínica</strong><span>Acceso restringido a remisiones aceptadas</span></div>';
   else if(isRole("Paciente"))cards='<div class="metric"><strong>Mi historia</strong><span>Consulta de información propia</span></div><div class="metric"><strong>Mis reportes</strong><span>Reporte de síntomas previos</span></div><div class="metric"><strong>Mis encuentros</strong><span>Seguimiento clínico</span></div><div class="metric"><strong>Imágenes</strong><span>Estudios vinculados</span></div>';
-  else cards='<div class="metric"><strong>Facturación</strong><span>Consulta y creación de facturas de encuentros finalizados</span></div>';
+  else cards='<div class="metric"><strong>Facturación</strong><span>Consulta y creación de facturas en MongoDB</span></div>';
 
   // NUEVO: tarjetas de trabajo pendiente; los números los llena pendientes.js
   const filas=[...(CONTADORES_POR_ROL[u.rol]||[]),["notificaciones_no_leidas","Notificaciones sin leer"]];
@@ -113,7 +120,16 @@ async function renderHome(container){
     filas.map(([clave,texto])=>`<div class="metric"><strong class="metric-num" data-contador="${clave}" data-mostrar-cero>0</strong><span>${escapeHtml(texto)}</span></div>`).join("")+
     `</div><p class="muted small-text">Se actualiza solo, en tiempo real.</p></section>`;
 
-  container.innerHTML=`<section class="page-hero"><div><p class="eyebrow">Sesión activa</p><h2>Bienvenido, ${escapeHtml(u.username)}</h2><p class="muted">El contenido y las acciones se adaptan al rol <strong>${escapeHtml(u.rol)}</strong>. Los accesos siguen siendo validados por el backend.</p></div><span class="badge success">JWT validado</span></section>${pendientes}<section class="grid grid-4">${cards}</section><section class="card"><h3>Arquitectura activa</h3><p class="muted">Frontend SPA → FastAPI → Neon PostgreSQL / HAPI FHIR R4 / Orthanc PACS. Use los indicadores superiores para verificar disponibilidad.</p></section>`;
+  let atencionActual="";
+  if(isRole("Paciente")){
+    try{
+      const encuentros=await apiGet("/encuentros/mios");
+      const activo=(encuentros||[]).find(e=>e.estado!=="finalizado");
+      if(activo)atencionActual=`<section class="card"><div class="section-head"><div><p class="eyebrow">Atención actual</p><h3>Encuentro #${activo.id_encuentro}</h3></div><span class="badge info">${escapeHtml(activo.estado)}</span></div><p><strong>Servicio:</strong> ${escapeHtml(activo.servicio||"Urgencias")}</p><p><strong>Motivo:</strong> ${escapeHtml(activo.motivo_consulta||"—")}</p><p class="muted small-text">Su atención está en curso. El nivel de triage aparecerá cuando el profesional complete la clasificación.</p></section>`;
+    }catch{}
+  }
+
+  container.innerHTML=`<section class="page-hero"><div><p class="eyebrow">Sesión activa</p><h2>Bienvenido, ${escapeHtml(u.username)}</h2><p class="muted">El contenido y las acciones se adaptan al rol <strong>${escapeHtml(u.rol)}</strong>. Los accesos siguen siendo validados por el backend.</p></div><span class="badge success">JWT validado</span></section>${atencionActual}${pendientes}<section class="grid grid-4">${cards}</section><section class="card"><h3>Arquitectura activa</h3><p class="muted">Frontend SPA → FastAPI → Neon PostgreSQL / HAPI FHIR R4 / Orthanc PACS. Use los indicadores superiores para verificar disponibilidad.</p></section>`;
 }
 
 form.addEventListener("submit",async e=>{
@@ -159,6 +175,18 @@ window.addEventListener("tr:evento",e=>{
 window.addEventListener("tr:conectado",()=>{
   refrescarPendientes();
   if(vistaActual==="notificaciones") navigate("notificaciones");
+});
+
+// Abre directamente la ficha desde la cola de Urgencias.
+window.addEventListener("app:open-patient",async e=>{
+  if(!isRole("Medico")) return;
+  vistaActual="paciente";
+  document.querySelectorAll(".nav-button").forEach(b=>b.classList.toggle("active",b.dataset.view==="paciente"));
+  document.getElementById("page-title").textContent=routes.paciente.label;
+  document.getElementById("page-eyebrow").textContent=getCurrentUser().rol;
+  main.innerHTML="";
+  await renderPacienteWorkspace(main,{documento:e.detail?.documento});
+  enhanceTables(main);
 });
 
 (async()=>{const u=await restoreSession();u?showApp():showLogin();})();
