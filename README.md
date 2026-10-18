@@ -20,7 +20,7 @@ flowchart LR
     C[Cloudflare Tunnel] --> N
 ```
 
-Servicios levantados con `docker compose up -d`: `api`, `frontend`, `ml`, `mongodb`, `orthanc`, `hapi-fhir`, `hapi-postgres` y `cloudflared`.
+Servicios levantados con `docker compose up -d` (9): `api`, `frontend`, `ml`, `mongodb`, `orthanc`, `hapi-fhir`, `hapi-postgres`, `cloudflared` y `postgres` (PostgreSQL local alternativo; la base clínica por defecto es Neon, externa).
 
 ## Flujo clínico principal
 
@@ -58,7 +58,7 @@ flowchart TD
 - Contraseñas almacenadas con hash.
 - Bloqueo después de 3 intentos fallidos y desbloqueo solo por Admin.
 - CORS restringido, cabeceras de seguridad y rate limiting en Nginx.
-- Secretos fuera de Git: solo se versionan `.env.example` y `back/example.pass.env`.
+- Secretos fuera de Git: solo deben versionarse `.env.example` y `back/example.pass.env`. Se comprueba con `git ls-files` (ver "Comprobaciones").
 - Minimización y seudonimización del payload enviado al servicio ML.
 - Auditoría de acciones relevantes.
 
@@ -66,7 +66,7 @@ flowchart TD
 
 ### Dataset tabular
 
-La base homologada combina KTAS y NHAMCS 2022. Después del preprocesamiento se usan 7.443 registros de entrenamiento y 1.861 de prueba. El clustering usa k-means con `k=5` y genera sintéticos dentro de cada grupo. Ver `docs/DATASETS.md`.
+La base homologada combina KTAS y NHAMCS 2022. Después del preprocesamiento se usan 7.443 registros de entrenamiento y 1.861 de prueba. El clustering usa k-means con `k=5` y genera sintéticos dentro de cada grupo. Ver `docs/DATASETS.md` (fuentes, filtros, clusters, sintéticos) y `docs/MODELO.md` (modelo, umbrales, sesgo, limitaciones).
 
 ### Modelo supervisado
 
@@ -87,7 +87,7 @@ Se evaluó el comportamiento por fuente, sexo y grupo de edad. La principal dife
 
 ## PACS e imágenes
 
-Orthanc funciona como PACS. Las imágenes se asocian a pacientes y se consultan desde su ficha. El dataset público real definitivo de imágenes está aún en selección y debe completarse en `docs/DATASETS.md` antes de la entrega final.
+Orthanc funciona como PACS. Las imágenes se asocian a pacientes y se consultan desde su ficha. Las fuentes y el procedimiento de carga están en `docs/DATASETS.md`, sección 2.
 
 ## Interoperabilidad FHIR
 
@@ -105,6 +105,25 @@ Eventos principales documentados en `docs/EVENTOS.md`:
 - Observation FHIR → notificación al médico;
 - alerta crítica → aviso persistente hasta reconocimiento y escalamiento.
 
+### Diagrama de eventos
+
+```mermaid
+flowchart LR
+    L[Login: 3.er fallo] -->|cuenta_bloqueada| P
+    R[Médico crea remisión] -->|remision_recibida| P
+    E[Especialista acepta o finaliza] -->|remision_aceptada / finalizada| P
+    F[Observation en HAPI FHIR] -->|Subscription rest-hook| P
+    I[Análisis de IA] -->|reporte_ia_pendiente / alerta_critica| P
+    T[Hilo de escalamiento] -->|alerta_critica_escalada| P
+    K[Reconocer alerta] -->|alerta_reconocida| P
+    A[Aprobar reporte IA] -->|factura_ia_creada| P
+    D[Admin reasigna médico] -->|reasignacion_medica| P
+    P{{publicar}} --> N[(notificaciones)]
+    P --> S[SSE /eventos/stream]
+```
+
+El catálogo completo, con destinatarios y datos de cada evento, está en `docs/EVENTOS.md`.
+
 ## Facturación
 
 La facturación se almacena en MongoDB. Solo `Contable` y `Admin` pueden operarla. La aprobación de un reporte IA genera automáticamente una factura enlazada mediante `reporte_id`. Ver `docs/CONTABILIDAD.md`.
@@ -115,13 +134,43 @@ La historia integra encuentros, observaciones, diagnósticos, notas, exámenes, 
 
 ## Mapa normativo
 
+Resumen; el detalle artículo por artículo y las limitaciones están en `docs/LEYES.md`.
+
 | Norma | Referencia aplicada | Control técnico del proyecto |
 |---|---|---|
 | Ley 1581 de 2012 | Art. 4, principios de finalidad, circulación restringida, seguridad y confidencialidad | RBAC, JWT, aislamiento por paciente, seudonimización/minimización, auditoría y secretos fuera del repositorio |
 | Ley 2015 de 2020 | Arts. 1-3: historia clínica electrónica e interoperabilidad | HAPI FHIR R4, recursos interoperables y continuidad de información |
-| Resolución 866 de 2021 | Reglamentación de elementos de datos clínicos relevantes para IHCE | Uso de FHIR, identificadores y codificación clínica interoperable |
+| Resolución 866 de 2021 | Reglamentación de elementos de datos clínicos relevantes para IHCE | Datos clínicos relevantes (incluye prioridad de triaje y diagnóstico CIE-10) expuestos en recursos FHIR R4; la resolución no nombra FHIR, es decisión de diseño |
 | Resolución 1995 de 1999 | Arts. 13, 14 y 16: custodia, acceso y seguridad de historia clínica | Acceso por rol, historia clínica, PDF, auditoría y controles de integridad/acceso |
+| Resolución 5596 de 2015 | Criterios técnicos del triage: cinco categorías; el triage no puede usarse para negar atención | Niveles 1–5; la IA solo apoya, la decisión es del profesional |
 | Resolución 3100 de 2019 | Estándares de procesos prioritarios, historia clínica y registros del prestador | Trazabilidad del proceso de atención, registros clínicos estructurados y evidencia del encuentro |
+
+## Trazabilidad con los requisitos
+
+| Req. | Tema | Dónde se documenta |
+|---|---|---|
+| R01 | Roles y permisos | README, "Roles" |
+| R02 | Bloqueo de cuenta | README, "Seguridad"; `docs/EVENTOS.md` (`cuenta_bloqueada`) |
+| R03 | Seguridad (JWT, hash, CORS, cabeceras, límite de peticiones, secretos) | README, "Seguridad"; `docs/LEYES.md` |
+| R04 | URL pública (Cloudflare Tunnel) | README, "Despliegue" |
+| R05 | Servicios y arquitectura | README, "Arquitectura" |
+| R06 | PACS e imágenes | README, "PACS e imágenes"; `docs/DATASETS.md`, sección 2 |
+| R07 | Dataset, clusters y sintéticos | `docs/DATASETS.md`, secciones 1 y 1.7–1.8 |
+| R08 | Remisiones | `docs/EVENTOS.md` |
+| R09 | Facturación en MongoDB | `docs/CONTABILIDAD.md` |
+| R10 | Reporte de IA con aprobación del profesional | `docs/MODELO.md`, secciones 1 y 8 |
+| R11 | Historia clínica en PDF | README, "Historia clínica" |
+| R12 | Minimización y seudonimización del payload | `docs/MODELO.md`, sección 8 |
+| R13 | Auditoría | README, "Seguridad"; `docs/LEYES.md` |
+| R14 | Eliminación lógica y restauración | `docs/LEYES.md`, "Controles transversales" |
+| R15 | Interoperabilidad FHIR R4 | README, "Interoperabilidad FHIR" |
+| R16 | Interfaz web | README, "Arquitectura" |
+| R17 | Tiempo real (SSE) | README, "Sistema reactivo"; `docs/EVENTOS.md` |
+| R18 | Bandeja persistente y pendientes | `docs/EVENTOS.md` |
+| R19 | Reacciones automáticas | `docs/EVENTOS.md`; `docs/CONTABILIDAD.md` |
+| R20 | Alertas críticas, reconocimiento y escalamiento | `docs/EVENTOS.md`, "Escalamiento"; `docs/MODELO.md`, sección 3 |
+| R21 | Subscription FHIR | README, "Interoperabilidad FHIR"; `docs/EVENTOS.md` (`observacion_fhir`) |
+| R22 | Documentación y marco normativo | README; `docs/LEYES.md` |
 
 ## Despliegue
 
@@ -147,29 +196,23 @@ El servicio `cloudflared` publica el frontend/Nginx. La misma URL pública sirve
 - API: `/api/...`;
 - HAPI FHIR: `/fhir/...`.
 
-Como se usa Quick Tunnel, la URL puede cambiar al recrear `cloudflared`; antes de entregar se debe copiar la URL vigente en `tester.yaml`.
+Como se usa Quick Tunnel, la URL pública cambia si se recrea `cloudflared`; la URL vigente está en `tester.yaml`.
 
 ## Contrato de evaluación
 
-`tester.yaml` debe permanecer en la raíz. Antes de la evaluación completar:
+`tester.yaml` está en la raíz y declara la URL pública, los usuarios de prueba y las rutas del API que usa la evaluación. La estructura de rutas y `tester.yaml` se mantienen sincronizados.
 
-```yaml
-url_publica: "https://URL-VIGENTE.trycloudflare.com"
-```
-
-No se debe modificar la estructura de rutas sin actualizar también `tester.yaml`.
-
-## Comprobaciones antes de entregar
+## Comprobaciones del despliegue
 
 ```powershell
 # Todo el stack
 docker compose up -d --build
 docker compose ps
 
-# Confirmar que secretos NO estén versionados
+# Secretos no versionados
 git ls-files | findstr /I ".env pass.env"
 ```
 
 El segundo comando no debe devolver `.env` ni `back/pass.env`.
 
-También se debe verificar manualmente el guion de demostración: alerta crítica, aprobación IA → factura, remisión y aceptación, Observation FHIR, bloqueo/desbloqueo, PDF y auditoría, sin recargar la página.
+Guion de demostración: alerta crítica, aprobación IA → factura, remisión y aceptación, Observation FHIR, bloqueo/desbloqueo, PDF y auditoría, sin recargar la página.
