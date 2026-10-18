@@ -22,6 +22,39 @@ clínico no llega al paciente ni al contable (alcance por rol, R17).
       "...": "datos propios del hecho (remision_id, especialidad...)"
     }
 
+## Diagrama de eventos
+
+```mermaid
+flowchart LR
+    subgraph Origen
+        L[Login: 3.er intento fallido]
+        R[Médico crea remisión]
+        E[Especialista acepta o finaliza]
+        F[Observation en HAPI FHIR]
+        I[POST /ia/analizar]
+        T[Hilo de escalamiento, cada 30 s]
+        K[Médico reconoce alerta]
+        A[Médico aprueba reporte IA]
+        D[Admin desactiva médico con encuentros]
+    end
+    P{{core.eventos.publicar}}
+    L -->|cuenta_bloqueada| P
+    R -->|remision_recibida| P
+    E -->|remision_aceptada / finalizada| P
+    F -->|"Subscription rest-hook → /fhir-hook"| P
+    I -->|reporte_ia_pendiente, alerta_critica| P
+    T -->|alerta_critica_escalada| P
+    K -->|alerta_reconocida| P
+    A -->|factura_ia_creada| P
+    D -->|reasignacion_medica| P
+    P --> N[(Tabla notificaciones)]
+    P --> S[Canal SSE /eventos/stream]
+    N --> B[Bandeja y /pendientes]
+    S --> U[Pestañas abiertas del destinatario]
+```
+
+Cada evento se guarda **antes** de empujarse por SSE: si el usuario no estaba conectado, lo ve al abrir la bandeja.  En el análisis de IA, los avisos se publican después de confirmar la transacción.
+
 ## Eventos
 
 | Evento (`tipo`) | Quién lo dispara | A quién llega | Reacción | Datos extra |
@@ -29,9 +62,14 @@ clínico no llega al paciente ni al contable (alcance por rol, R17).
 | `cuenta_bloqueada` | 3.er intento fallido de login (`auth/service.py`) | Todos los Admin activos | Aviso en bandeja y en vivo; el Admin puede desbloquear | `usuario_bloqueado`, `documento_usuario` |
 | `remision_recibida` | Médico crea una remisión (`POST /remisiones`) | El especialista destino | Aviso; sube `remisiones_recibidas` | `remision_id`, `id_encuentro`, `especialidad`, `medico_remitente` |
 | `remision_aceptada` | Especialista acepta (`PATCH /remisiones/{id}/aceptar`) | El médico remitente | Aviso; baja `remisiones_recibidas` del especialista | `remision_id`, `especialidad`, `observacion` |
-| `remision_rechazada` | Especialista rechaza (`PATCH /remisiones/{id}/rechazar`) | El médico remitente | Aviso; baja `remisiones_recibidas` del especialista | `remision_id`, `especialidad`, `observacion` |
+| `remision_finalizada` | El especialista dueño marca como terminada una remisión **ya aceptada** (`PATCH /remisiones/{id}/finalizar`); si no está aceptada responde 409 | Únicamente el médico remitente (el paciente y el contable no lo reciben) | Aviso en bandeja y en vivo; la remisión pasa a `finalizada`; se audita `FINALIZAR` en `remisiones` | `remision_id`, `id_encuentro`, `especialidad`, `observacion`, `puede_revisar_cierre_encuentro` |
 | `observacion_fhir` | Un sistema externo crea o actualiza una `Observation` en HAPI FHIR. HAPI la envía a `/fhir-hook` mediante la Subscription `triaje-observaciones` (rest-hook) | El médico responsable del encuentro activo del paciente; si no hay, los Admin | Aviso en bandeja y en vivo; fila `RECIBIR_FHIR` con `origen = FHIR` en `auditoria_cambios` | `origen`, `fhir_id`, `loinc`, `nombre`, `valor` |
 
+> **Rechazo de una remisión.** `PATCH /remisiones/{id}/rechazar` (solo el especialista destino, remisión `pendiente`) cambia el estado a `rechazada` y registra `RECHAZAR_REMISION` en la auditoría. No publica notificación: el médico remitente ve el nuevo estado y la observación en su lista de remisiones.
+
+> `remision_finalizada` es adicional: no reemplaza el flujo obligatorio de R19 (`remision_aceptada`). Avisa al médico que la valoración especializada terminó para que pueda revisar el caso antes de cerrar el encuentro.
+
+> **Encuentros finalizados:** las alertas y los contadores de `/pendientes` solo cuentan encuentros que no están finalizados. Al cerrar un encuentro dejan de aparecer.
 
 ## Eventos de IA y alertas críticas (R10, R20)
 
@@ -51,11 +89,3 @@ Paciente y Contable no reciben ninguno de estos eventos, ni ven ni reconocen ale
 - **Mecanismo:** un hilo de la API revisa cada 30 s las alertas `activa` sin escalar y más antiguas que el umbral (`FOR UPDATE SKIP LOCKED`, para no chocar con un reconocimiento simultáneo).
 - **A quién:** a todos los usuarios con rol Admin. Desde ese momento cualquier médico puede reconocerla, además del destinatario original.
 - **Auditoría:** `ESCALAR_ALERTA`, con `origen = 'SISTEMA'` y sin usuario, porque nadie la ejecuta.
-
-
-
-### Mejora adicional · `remision_finalizada`
-- **Disparador:** el especialista marca como terminada una remisión previamente aceptada.
-- **Destinatario:** únicamente el médico remitente.
-- **Reacción:** notificación persistente + evento SSE para informar que la valoración especializada terminó y que el médico puede revisar el caso antes de cerrar el encuentro.
-- **Nota:** este evento es adicional; no reemplaza el flujo obligatorio R19 `remision_aceptada`.
