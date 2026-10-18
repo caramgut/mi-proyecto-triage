@@ -387,7 +387,8 @@ facturas = responses.get("facturas") or []
 
 if facturas:
 
-    id_factura = facturas[0]["id_factura"]
+    # Las facturas viven en MongoDB: el identificador se serializa como "id".
+    id_factura = facturas[0].get("id") or facturas[0].get("id_factura")
 
     request(
         "GET",

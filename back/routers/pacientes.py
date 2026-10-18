@@ -105,11 +105,44 @@ def crear_paciente(data:PacienteCreate,db=Depends(get_db),u=Depends(requerir_rol
 def listar_pacientes(db=Depends(get_db),u=Depends(requerir_roles("Admin","Medico"))):
     cur=db.cursor(cursor_factory=RealDictCursor)
     try:
+        if u["rol"]=="Medico":
+            cur.execute("""
+                SELECT p.*,
+                       (SELECT e.medico_responsable FROM encuentros e WHERE e.id_paciente=p.numero_documento_paciente AND e.is_deleted=FALSE AND e.estado <> 'finalizado' ORDER BY e.fecha_hora_ingreso DESC LIMIT 1) AS medico_encuentro_activo,
+                       EXISTS(
+                           SELECT 1
+                           FROM auditoria_cambios a
+                           WHERE a.tabla_afectada='pacientes'
+                             AND a.registro_id=p.numero_documento_paciente::text
+                             AND a.accion='CREAR'
+                             AND a.realizado_por=%s
+                       ) AS puede_eliminar
+                FROM pacientes p
+                WHERE p.is_deleted=FALSE
+                ORDER BY p.apellidos,p.nombres;
+            """,(u["numero_documento_usuario"],))
+        else:
+            cur.execute("""
+                SELECT p.*, TRUE AS puede_eliminar
+                FROM pacientes p
+                WHERE p.is_deleted=FALSE
+                ORDER BY p.apellidos,p.nombres;
+            """)
+        return cur.fetchall()
+    finally:
+        cur.close()
+
+@router.get("/pacientes/eliminados",tags=["Pacientes"])
+def listar_pacientes_eliminados(db=Depends(get_db),u=Depends(requerir_roles("Admin"))):
+    cur=db.cursor(cursor_factory=RealDictCursor)
+    try:
         cur.execute("""
-            SELECT *
-            FROM pacientes
-            WHERE is_deleted=FALSE
-            ORDER BY apellidos,nombres;
+            SELECT p.*,
+                   u.username AS eliminado_por_username
+            FROM pacientes p
+            LEFT JOIN usuarios u ON u.numero_documento_usuario=p.deleted_by
+            WHERE p.is_deleted=TRUE
+            ORDER BY p.deleted_at DESC NULLS LAST,p.apellidos,p.nombres;
         """)
         return cur.fetchall()
     finally:
@@ -190,7 +223,7 @@ def editar_paciente(documento:int,data:PacienteUpdate,db=Depends(get_db),u=Depen
         cur.close()
 
 @router.delete("/pacientes/{documento}",tags=["Pacientes"])
-def eliminar_paciente(documento:int,db=Depends(get_db),u=Depends(requerir_roles("Admin"))):
+def eliminar_paciente(documento:int,db=Depends(get_db),u=Depends(requerir_roles("Admin","Medico"))):
     cur=db.cursor(cursor_factory=RealDictCursor)
 
     try:
@@ -198,6 +231,25 @@ def eliminar_paciente(documento:int,db=Depends(get_db),u=Depends(requerir_roles(
 
         if not anterior:
             raise HTTPException(status_code=404,detail="Paciente no encontrado")
+
+        # R14: el médico solo puede hacer soft delete de un paciente que él mismo creó.
+        # No se agrega una columna nueva a la BD: la autoría se verifica en la auditoría
+        # del evento CREAR del paciente. El Admin conserva permiso para eliminar/restaurar.
+        if u["rol"]=="Medico":
+            cur.execute("""
+                SELECT 1
+                FROM auditoria_cambios
+                WHERE tabla_afectada='pacientes'
+                  AND registro_id=%s
+                  AND accion='CREAR'
+                  AND realizado_por=%s
+                LIMIT 1;
+            """,(str(documento),u["numero_documento_usuario"]))
+            if not cur.fetchone():
+                raise HTTPException(
+                    status_code=403,
+                    detail="El médico solo puede eliminar pacientes registrados por él mismo"
+                )
 
         cur.execute("""
             UPDATE pacientes

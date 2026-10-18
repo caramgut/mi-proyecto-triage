@@ -8,6 +8,7 @@ from pydantic import BaseModel,Field
 
 from auth.service import requerir_roles
 from core.database import get_db
+from core.eventos import publicar
 from core.security import hash_password
 from routers.common import obtener_registro,registrar_auditoria
 
@@ -170,7 +171,8 @@ def listar_usuarios(db=Depends(get_db),u=Depends(requerir_roles("Admin"))):
         cur.execute("""
             SELECT
                 u.numero_documento_usuario,u.username,u.nombres,u.apellidos,
-                u.email,u.telefono,u.estado,u.is_deleted,r.nombre AS rol,
+                u.email,u.telefono,u.estado,u.is_deleted,u.id_rol,r.nombre AS rol,
+                MIN(ue.id_especialidad) AS id_especialidad,
                 EXISTS(SELECT 1 FROM pacientes p WHERE p.numero_documento_paciente=u.numero_documento_usuario AND p.is_deleted=FALSE) AS paciente_registrado,
                 COALESCE(string_agg(e.nombre, ', ' ORDER BY e.nombre),'') AS especialidades
             FROM usuarios u
@@ -222,6 +224,17 @@ def editar_usuario(documento:int,data:UsuarioUpdate,db=Depends(get_db),u=Depends
         anterior=obtener_registro(cur,"usuarios","numero_documento_usuario",documento)
         if not anterior:
             raise HTTPException(status_code=404,detail="Usuario no encontrado")
+
+        # Un médico con encuentros activos no puede desactivarse ni cambiar de rol por
+        # esta ruta: debe usarse DELETE /usuarios/{doc}?medico_reemplazo=... (reasigna).
+        if cambios.get("estado") is False or ("id_rol" in cambios and cambios["id_rol"]!=anterior["id_rol"]):
+            if _nombre_rol(cur,anterior["id_rol"])=="Medico":
+                cur.execute("""
+                    SELECT count(*) AS n FROM encuentros
+                    WHERE medico_responsable=%s AND is_deleted=FALSE AND estado<>'finalizado';
+                """,(documento,))
+                if cur.fetchone()["n"]:
+                    raise HTTPException(status_code=409,detail="El médico tiene encuentros activos. Use la opción Eliminar para reasignarlos a otro médico antes de desactivarlo o cambiar su rol")
 
         if "id_rol" in cambios:
             cur.execute(
@@ -280,42 +293,121 @@ def editar_usuario(documento:int,data:UsuarioUpdate,db=Depends(get_db),u=Depends
     finally:
         cur.close()
 
-@router.delete("/usuarios/{documento}",tags=["Usuarios"])
-def eliminar_usuario(documento:int,db=Depends(get_db),u=Depends(requerir_roles("Admin"))):
-    cur=db.cursor(cursor_factory=RealDictCursor)
 
+@router.get("/usuarios/{documento}/impacto-desactivacion",tags=["Usuarios"])
+def impacto_desactivacion(documento:int,db=Depends(get_db),u=Depends(requerir_roles("Admin"))):
+    cur=db.cursor(cursor_factory=RealDictCursor)
+    try:
+        cur.execute("""
+            SELECT us.numero_documento_usuario,us.username,us.nombres,us.apellidos,r.nombre AS rol
+            FROM usuarios us JOIN roles r ON r.id_rol=us.id_rol
+            WHERE us.numero_documento_usuario=%s;
+        """,(documento,))
+        objetivo=cur.fetchone()
+        if not objetivo:
+            raise HTTPException(status_code=404,detail="Usuario no encontrado")
+
+        encuentros=[]
+        disponibles=[]
+        if objetivo["rol"]=="Medico":
+            cur.execute("""
+                SELECT e.id_encuentro,e.id_paciente,e.estado,e.motivo_consulta,
+                       p.nombres AS paciente_nombres,p.apellidos AS paciente_apellidos
+                FROM encuentros e
+                JOIN pacientes p ON p.numero_documento_paciente=e.id_paciente
+                WHERE e.medico_responsable=%s
+                  AND e.is_deleted=FALSE
+                  AND e.estado<>'finalizado'
+                ORDER BY e.fecha_hora_ingreso;
+            """,(documento,))
+            encuentros=cur.fetchall()
+            cur.execute("""
+                SELECT us.numero_documento_usuario,us.username,us.nombres,us.apellidos
+                FROM usuarios us JOIN roles r ON r.id_rol=us.id_rol
+                WHERE r.nombre='Medico'
+                  AND us.estado=TRUE AND us.is_deleted=FALSE
+                  AND us.numero_documento_usuario<>%s
+                ORDER BY us.nombres,us.apellidos;
+            """,(documento,))
+            disponibles=cur.fetchall()
+        return {"usuario":objetivo,"encuentros_activos":encuentros,"medicos_disponibles":disponibles}
+    finally:
+        cur.close()
+
+@router.delete("/usuarios/{documento}",tags=["Usuarios"])
+def eliminar_usuario(documento:int,medico_reemplazo:int|None=None,db=Depends(get_db),u=Depends(requerir_roles("Admin"))):
+    cur=db.cursor(cursor_factory=RealDictCursor)
+    reasignados=[]
+    reemplazo_notificar=None
     try:
         anterior=obtener_registro(cur,"usuarios","numero_documento_usuario",documento)
-
         if not anterior:
             raise HTTPException(status_code=404,detail="Usuario no encontrado")
 
+        cur.execute("SELECT nombre FROM roles WHERE id_rol=%s;",(anterior["id_rol"],))
+        rr=cur.fetchone()
+        rol=rr["nombre"] if rr else None
+
+        if rol=="Medico":
+            cur.execute("""
+                SELECT id_encuentro FROM encuentros
+                WHERE medico_responsable=%s AND is_deleted=FALSE AND estado<>'finalizado'
+                ORDER BY id_encuentro;
+            """,(documento,))
+            reasignados=[r["id_encuentro"] for r in cur.fetchall()]
+            if reasignados:
+                if medico_reemplazo is None:
+                    raise HTTPException(status_code=409,detail={
+                        "codigo":"REASIGNACION_REQUERIDA",
+                        "mensaje":"El médico tiene encuentros activos. Debe seleccionar un médico de reemplazo antes de desactivarlo.",
+                        "encuentros_activos":len(reasignados)
+                    })
+                cur.execute("""
+                    SELECT 1 FROM usuarios us JOIN roles r ON r.id_rol=us.id_rol
+                    WHERE us.numero_documento_usuario=%s AND r.nombre='Medico'
+                      AND us.estado=TRUE AND us.is_deleted=FALSE
+                      AND us.numero_documento_usuario<>%s;
+                """,(medico_reemplazo,documento))
+                if not cur.fetchone():
+                    raise HTTPException(status_code=400,detail="El médico de reemplazo no es válido o no está activo")
+
+                cur.execute("""
+                    UPDATE encuentros
+                    SET medico_responsable=%s,updated_at=now()
+                    WHERE medico_responsable=%s AND is_deleted=FALSE AND estado<>'finalizado'
+                    RETURNING id_encuentro;
+                """,(medico_reemplazo,documento))
+                reasignados=[r["id_encuentro"] for r in cur.fetchall()]
+                for eid in reasignados:
+                    registrar_auditoria(
+                        cur,"encuentros",eid,"REASIGNAR_MEDICO",u["numero_documento_usuario"],
+                        anteriores={"medico_responsable":documento},
+                        nuevos={"medico_responsable":medico_reemplazo}
+                    )
+                reemplazo_notificar=medico_reemplazo
+
         cur.execute("""
             UPDATE usuarios
-            SET is_deleted=TRUE,
-                estado=FALSE,
-                deleted_at=now(),
-                deleted_by=%s,
-                updated_at=now()
+            SET is_deleted=TRUE,estado=FALSE,deleted_at=now(),deleted_by=%s,updated_at=now()
             WHERE numero_documento_usuario=%s
             RETURNING *;
         """,(u["numero_documento_usuario"],documento))
-
         nuevo=cur.fetchone()
-
-        registrar_auditoria(
-            cur,"usuarios",documento,"ELIMINAR",
-            u["numero_documento_usuario"],anterior,nuevo
-        )
-
+        registrar_auditoria(cur,"usuarios",documento,"ELIMINAR",u["numero_documento_usuario"],anterior,nuevo)
         db.commit()
-        return {"mensaje":"Usuario eliminado lógicamente"}
-
     except:
         db.rollback()
         raise
     finally:
         cur.close()
+
+    if reemplazo_notificar is not None:
+        publicar(
+            db,[reemplazo_notificar],"reasignacion_medica",
+            f"Se le asignaron {len(reasignados)} encuentros activos por desactivación del médico {documento}.",
+            datos={"medico_anterior":documento,"encuentros":reasignados}
+        )
+    return {"mensaje":"Usuario eliminado lógicamente","encuentros_reasignados":reasignados,"medico_reemplazo":medico_reemplazo}
 
 @router.patch("/usuarios/{documento}/restaurar",tags=["Usuarios"])
 def restaurar_usuario(documento:int,db=Depends(get_db),u=Depends(requerir_roles("Admin"))):

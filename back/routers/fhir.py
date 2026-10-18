@@ -6,6 +6,7 @@ import requests
 
 from fastapi import APIRouter,Depends,HTTPException
 from psycopg2.extras import RealDictCursor
+from pydantic import BaseModel,Field
 
 from auth.service import requerir_roles
 from core.config import HAPI_FHIR_URL
@@ -64,6 +65,30 @@ def fhir_get(resource_type,resource_id):
         raise HTTPException(status_code=404,detail="Recurso FHIR no encontrado")
     if r.status_code!=200:
         raise HTTPException(status_code=502,detail=f"Error consultando HAPI FHIR: HTTP {r.status_code}")
+    return r.json()
+
+
+def fhir_post(resource_type,resource):
+    resource=dict(resource)
+    resource["resourceType"]=resource_type
+    try:
+        r=requests.post(
+            f"{HAPI_FHIR_URL}/{resource_type}",
+            json=resource,
+            headers={"Accept":"application/fhir+json","Content-Type":"application/fhir+json"},
+            timeout=20
+        )
+    except requests.RequestException as e:
+        raise HTTPException(status_code=503,detail=f"No fue posible conectar con HAPI FHIR: {e}")
+    if r.status_code not in (200,201):
+        try: detalle=r.json()
+        except Exception: detalle=r.text
+        raise HTTPException(status_code=502,detail={
+            "mensaje":"HAPI FHIR rechazó el recurso",
+            "resourceType":resource_type,
+            "status_code":r.status_code,
+            "respuesta":detalle
+        })
     return r.json()
 
 def ref_patient(documento): return f"Patient/{fhir_id('paciente',documento)}"
@@ -253,6 +278,107 @@ def build_invoice(f):
     }
     if f["concepto"]: r["type"]={"text":f["concepto"]}
     return r
+
+class ObservationManualIn(BaseModel):
+    codigo_loinc:str=Field(min_length=1,max_length=40)
+    nombre:str=Field(min_length=1,max_length=160)
+    valor:float
+    unidad:str=Field(min_length=1,max_length=40)
+
+
+@router.post("/fhir/pacientes/{documento}/observations",tags=["FHIR"],status_code=201)
+def registrar_observation_fhir_desde_portal(
+    documento:int,
+    data:ObservationManualIn,
+    db=Depends(get_db),
+    u=Depends(requerir_roles("Admin","Medico","Especialista"))
+):
+    """Registra un resultado interoperable en HAPI desde el portal clínico.
+
+    Este endpoint complementa, pero no reemplaza, la integración externa de R21:
+    un laboratorio o dispositivo puede seguir haciendo POST directamente a
+    /fhir/Observation. Al entrar a HAPI, la Subscription dispara el mismo flujo
+    de notificación y auditoría.
+    """
+    cur=db.cursor(cursor_factory=RealDictCursor)
+    try:
+        cur.execute("""
+            SELECT *
+            FROM pacientes
+            WHERE numero_documento_paciente=%s
+              AND is_deleted=FALSE;
+        """,(documento,))
+        paciente=cur.fetchone()
+        if not paciente:
+            raise HTTPException(status_code=404,detail="Paciente no encontrado")
+
+        # Garantiza que la referencia Patient/paciente-{documento} exista en HAPI.
+        fhir_put("Patient",fhir_id("paciente",documento),build_patient(paciente))
+
+        observation={
+            "status":"final",
+            "code":{
+                "coding":[{
+                    "system":"http://loinc.org",
+                    "code":data.codigo_loinc,
+                    "display":data.nombre
+                }],
+                "text":data.nombre
+            },
+            "subject":{"reference":ref_patient(documento)},
+            "valueQuantity":{
+                "value":data.valor,
+                "unit":data.unidad,
+                "system":"http://unitsofmeasure.org",
+                "code":data.unidad
+            }
+        }
+        recurso=fhir_post("Observation",observation)
+        return {
+            "mensaje":"Observation enviada a HAPI FHIR",
+            "paciente_id":documento,
+            "fhir_id":recurso.get("id"),
+            "observation":recurso
+        }
+    finally:
+        cur.close()
+
+
+@router.post("/fhir/pacientes/{documento}/observations/registradas",tags=["FHIR"])
+def enviar_observaciones_registradas(documento:int,db=Depends(get_db),u=Depends(requerir_roles("Medico","Admin"))):
+    """Reutiliza mediciones numéricas del encuentro activo, sin formularios ni datos inventados."""
+    cur=db.cursor(cursor_factory=RealDictCursor)
+    try:
+        cur.execute("""SELECT * FROM encuentros WHERE id_paciente=%s AND is_deleted=FALSE
+                       AND estado <> 'finalizado' ORDER BY fecha_hora_ingreso DESC LIMIT 1""",(documento,))
+        enc=cur.fetchone()
+        if not enc:
+            raise HTTPException(status_code=409,detail="No hay un encuentro activo para enviar observaciones")
+        if u["rol"]=="Medico" and enc["medico_responsable"] not in (None,u["numero_documento_usuario"]):
+            raise HTTPException(status_code=403,detail="El encuentro pertenece a otro médico")
+        cur.execute("""SELECT * FROM observaciones WHERE id_encuentro=%s AND is_deleted=FALSE
+                       AND codigo_loinc IS NOT NULL AND valor_numerico IS NOT NULL
+                       ORDER BY fecha_hora_observacion DESC""",(enc["id_encuentro"],))
+        obs=cur.fetchall()
+        # Un único valor por código, seleccionando el más reciente de cada signo.
+        seleccion={}
+        for o in obs:
+            seleccion.setdefault(o["codigo_loinc"],o)
+        if not seleccion:
+            raise HTTPException(status_code=422,detail="Registre y guarde los signos vitales antes de enviarlos a FHIR")
+        cur.execute("SELECT * FROM pacientes WHERE numero_documento_paciente=%s AND is_deleted=FALSE",(documento,))
+        paciente=cur.fetchone()
+        if not paciente: raise HTTPException(status_code=404,detail="Paciente no encontrado")
+        fhir_put("Patient",fhir_id("paciente",documento),build_patient(paciente))
+        fhir_put("Encounter",fhir_id("encuentro",enc["id_encuentro"]),build_encounter(enc))
+        enviados=[]
+        for o in seleccion.values():
+            fhir_put("Observation",fhir_id("observacion",o["id_observacion"]),build_observation(o,documento))
+            enviados.append({"id":o["id_observacion"],"codigo_loinc":o["codigo_loinc"]})
+        return {"paciente_id":documento,"encuentro_id":enc["id_encuentro"],"enviadas":len(enviados),"observaciones":enviados}
+    finally:
+        cur.close()
+
 
 @router.get("/fhir/estado",tags=["FHIR"])
 def estado_fhir(u=Depends(requerir_roles("Admin","Medico","Especialista"))):

@@ -5,7 +5,7 @@
 // Paciente y Contable no lo ven (la API además les responde 403).
 import {apiGet,apiPatch} from "./api.js";
 import {getCurrentUser} from "./auth.js";
-import {escapeHtml,showToast} from "./ui.js";
+import {escapeHtml,showToast,formatDate} from "./ui.js";
 
 const ROLES_CON_ALERTAS=["Admin","Medico","Especialista"];
 const rol=()=>getCurrentUser()?.rol;
@@ -78,3 +78,13 @@ window.addEventListener("tr:conectado",refrescarAlertas);
 window.addEventListener("tr:evento",e=>{if((e.detail?.tipo||"").includes("alerta"))refrescarAlertas();});
 // Al cerrar sesión se vacía el aviso
 window.addEventListener("auth:expired",()=>{const c=document.getElementById("alertas-criticas");if(c){c.innerHTML="";c.hidden=true;}});
+
+
+export async function renderAlertasEscaladas(container){
+  container.innerHTML='<div class="card">Cargando alertas escaladas…</div>';
+  try{
+    const todas=await apiGet("/alertas?estado=activa");
+    const alertas=todas.filter(a=>a.escalada_at);
+    container.innerHTML=`<section class="page-hero"><div><p class="eyebrow">Seguridad clínica</p><h2>Alertas críticas escaladas</h2><p class="muted">Una alerta aparece aquí automáticamente cuando permanece activa sin reconocimiento durante el tiempo configurado. El Admin supervisa el escalamiento; el reconocimiento clínico lo realiza un Médico o Especialista.</p></div><span class="badge ${alertas.length?'danger':'success'}">${alertas.length} activas</span></section><div class="card">${alertas.length?`<div class="table-wrap"><table class="data-table"><thead><tr><th>Paciente</th><th>Documento</th><th>Reporte IA</th><th>Prob. crítico</th><th>Creada</th><th>Escalada</th><th>Estado</th></tr></thead><tbody>${alertas.map(a=>`<tr><td>${escapeHtml(`${a.paciente_nombres||""} ${a.paciente_apellidos||""}`)}</td><td>${a.paciente_id}</td><td>${a.reporte_id}</td><td>${Math.round(Number(a.p_critico||0)*100)}%</td><td>${formatDate(a.created_at)}</td><td>${formatDate(a.escalada_at)}</td><td><span class="badge danger">ESCALADA</span></td></tr>`).join("")}</tbody></table></div>`:'<div class="empty-state"><strong>No hay alertas escaladas activas.</strong><p>Para probar R20, genere un caso crítico y no reconozca la alerta. El sistema revisa automáticamente las alertas y la escalará al Admin cuando venza el tiempo configurado.</p></div>'}</div>`;
+  }catch(e){container.innerHTML=`<div class="error-box">${escapeHtml(e.message)}</div>`;}
+}

@@ -1,8 +1,8 @@
 import {apiGet} from "./api.js";
 import {login,logout,restoreSession,getCurrentUser,initials,isRole} from "./auth.js";
 import {startStatusMonitor,stopStatusMonitor} from "./status.js";
-import {renderPacienteWorkspace} from "./pacientes.js";
-import {renderUsuarios,renderSecurity,renderAuditoria} from "./admin.js";
+import {renderPacienteWorkspace,renderListaPacientes} from "./pacientes.js";
+import {renderUsuarios,renderSecurity,renderAuditoria,renderPacientesEliminados,renderPapeleraClinica} from "./admin.js";
 import {renderFacturacion} from "./facturacion.js";
 import {renderUrgencias} from "./urgencias.js";
 import {renderMisReportes,renderMisEncuentros} from "./paciente_portal.js";
@@ -11,6 +11,7 @@ import {showToast,escapeHtml,enhanceTables} from "./ui.js";
 import {conectarCanal,desconectarCanal} from "./tiempo_real.js";          // NUEVO
 import {refrescarPendientes,pintarContadores} from "./pendientes.js";    // NUEVO
 import {renderNotificaciones} from "./notificaciones.js";                 // NUEVO
+import {renderAlertasEscaladas} from "./alertas.js";
 
 const loginView=document.getElementById("vista-login");
 const appView=document.getElementById("vista-app");
@@ -32,6 +33,7 @@ const routes={
   notificaciones:{label:"Notificaciones",icon:"🔔",roles:TODOS,render:renderNotificaciones,
                   contador:"notificaciones_no_leidas",refrescarCon:["*"]},                    // NUEVO
   urgencias:{label:"Urgencias",icon:"✚",roles:["Medico"],render:renderUrgencias},
+  pacientes:{label:"Pacientes",icon:"☰",roles:["Medico"],render:renderListaPacientes},
   paciente:{label:"Paciente / Historia",icon:"♙",roles:["Medico"],render:c=>renderPacienteWorkspace(c)},
   remisionesEnviadas:{label:"Remisiones enviadas",icon:"↗",roles:["Medico"],render:renderRemisionesEnviadas},
   remisiones:{label:"Mis remisiones",icon:"↗",roles:["Especialista"],render:renderRemisiones,contador:"remisiones_recibidas"},                 // NUEVO
@@ -39,6 +41,9 @@ const routes={
   misReportes:{label:"Mis reportes",icon:"✎",roles:["Paciente"],render:renderMisReportes},
   misEncuentros:{label:"Mis encuentros",icon:"☰",roles:["Paciente"],render:renderMisEncuentros},
   usuarios:{label:"Usuarios",icon:"⚙",roles:["Admin"],render:renderUsuarios},
+  pacientesEliminados:{label:"Pacientes eliminados",icon:"↺",roles:["Admin"],render:renderPacientesEliminados},
+  papeleraClinica:{label:"Papelera clínica",icon:"♻",roles:["Admin"],render:renderPapeleraClinica},
+  alertasEscaladas:{label:"Alertas escaladas",icon:"!",roles:["Admin"],render:renderAlertasEscaladas,contador:"alertas_activas",refrescarCon:["alerta_critica_escalada","alerta_reconocida"]},
   seguridad:{label:"Seguridad",icon:"🔒",roles:["Admin"],render:renderSecurity},
   auditoria:{label:"Auditoría",icon:"☷",roles:["Admin"],render:renderAuditoria},
   facturacion:{label:"Facturación",icon:"$",roles:["Admin","Contable"],render:renderFacturacion,refrescarCon:["factura_ia_creada"]},

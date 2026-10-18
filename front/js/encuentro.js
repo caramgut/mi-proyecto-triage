@@ -250,6 +250,7 @@ async function finalizarEncuentro(idEncuentro,refresh){
 /* ---------- Eliminar registro clínico ---------- */
 async function eliminarRegistro(tipo,id,refresh){
   const rutas={
+    antecedente:`/antecedentes/${id}`,
     observacion:`/observaciones/${id}`,
     diagnostico:`/diagnosticos/${id}`,
     nota:`/notas-clinicas/${id}`,

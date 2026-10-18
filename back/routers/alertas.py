@@ -64,7 +64,7 @@ def contar_alertas_activas(cur, u: dict) -> int:
     filtro, params = _visible_sql(u)
     if u["rol"] == "Admin":
         filtro = "a.escalada_at IS NOT NULL"          # al admin solo le corresponden las escaladas
-    cur.execute(f"SELECT count(*) FROM alertas a WHERE a.estado = 'activa' AND {filtro};", params)
+    cur.execute(f"SELECT count(*) FROM alertas a WHERE a.estado = 'activa' AND EXISTS (SELECT 1 FROM reportes_ia r JOIN encuentros e ON e.id_encuentro=r.id_encuentro WHERE r.id_reporte=a.id_reporte AND e.estado <> 'finalizado' AND e.is_deleted=FALSE) AND {filtro};", params)
     fila = cur.fetchone()
     return int(fila["count"] if isinstance(fila, dict) else fila[0])
 
@@ -94,7 +94,7 @@ def listar_alertas(
             FROM alertas a
             JOIN pacientes p ON p.numero_documento_paciente = a.id_paciente
             JOIN reportes_ia r ON r.id_reporte = a.id_reporte
-            WHERE {filtro} AND (%s::text IS NULL OR a.estado = %s)
+            WHERE {filtro} AND (a.estado <> 'activa' OR EXISTS (SELECT 1 FROM encuentros e WHERE e.id_encuentro=r.id_encuentro AND e.estado <> 'finalizado' AND e.is_deleted=FALSE)) AND (%s::text IS NULL OR a.estado = %s)
             ORDER BY (a.estado = 'activa') DESC, a.created_at DESC
             LIMIT 200;
         """, params + [estado, estado])
@@ -172,6 +172,7 @@ def _escalar_vencidas() -> int:
             SELECT a.*, p.nombres, p.apellidos
             FROM alertas a JOIN pacientes p ON p.numero_documento_paciente = a.id_paciente
             WHERE a.estado = 'activa' AND a.escalada_at IS NULL
+              AND EXISTS (SELECT 1 FROM reportes_ia r JOIN encuentros e ON e.id_encuentro=r.id_encuentro WHERE r.id_reporte=a.id_reporte AND e.estado <> 'finalizado' AND e.is_deleted=FALSE)
               AND a.created_at < now() - make_interval(mins => %s)
             ORDER BY a.created_at
             FOR UPDATE OF a SKIP LOCKED;

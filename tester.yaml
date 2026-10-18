@@ -1,0 +1,104 @@
+# tester.yaml
+# Contrato de verificación del equipo.
+# La plantilla oficial no fue publicada; este archivo se construyó a partir
+# de la sección "Contrato de verificación" de REQUISITOS.md.
+#
+# IMPORTANTE: antes de la entrega, pegar la URL vigente del Quick Tunnel
+# de Cloudflare en url_publica, sin slash final.
+
+url_publica: "https://carbon-console-organ-breath.trycloudflare.com/"
+espera_segundos: 8
+
+usuarios:
+  admin:
+    username: "admin.1171644825"
+    password: "Admin123*"
+
+  medico:
+    username: "medico1.1006713773"
+    password: "Medico123*"
+
+  especialista:
+    username: "especialista.1000000101"
+    password: "Especialista123*"
+
+  paciente:
+    username: "paciente.1158509126"
+    password: "Paciente123*"
+    documento: 1158509126
+
+  contable:
+    username: "administrativo1.1181650134"
+    password: "Administrativo123*"
+
+# Rutas públicas vistas desde Cloudflare.
+# Nginx publica la API bajo /api/.
+rutas:
+  login: "/api/auth/login"
+  yo: "/api/auth/me"
+
+  ia_analizar: "/api/ia/analizar/{documento}"
+  ia_reporte: "/api/ia/reportes/{id_reporte}"
+  ia_payload: "/api/ia/reportes/{id_reporte}/payload"
+
+  historia: "/api/pacientes/{documento}/historia-clinica"
+  historia_pdf: "/api/pacientes/{documento}/historia-clinica/pdf"
+  imagenes_paciente: "/api/pacientes/{documento}/imagenes"
+
+  clusters: "/api/ia/clusters"
+
+  remitir: "/api/remisiones"
+  remisiones: "/api/remisiones"
+  remision_aceptar: "/api/remisiones/{id_remision}/aceptar"
+
+  contable_listar: "/api/facturas"
+
+  notificaciones: "/api/notificaciones"
+  notif_leer: "/api/notificaciones/{id_notificacion}/leer"
+  pendientes: "/api/pendientes"
+
+  alertas: "/api/alertas"
+  alerta_reconocer: "/api/alertas/{id_alerta}/reconocer"
+
+  tiempo_real: "/api/eventos/stream"
+
+  # R21: HAPI FHIR se expone por Nginx bajo /fhir/ usando la misma URL pública.
+  fhir_observation: "/fhir/Observation"
+
+# Valores que el modelo actual reconoce como caso crítico y que pueden usarse
+# para la prueba automática de R20.
+paciente_critico:
+  signos:
+    fc: 140
+    fr: 32
+    pas: 75
+    pad: 40
+    temp_c: 36.5
+    spo2: 82
+    dolor_nrs: 0
+  motivo_categoria: "conciencia_paro"
+  llegada_ambulancia: true
+
+# Métodos HTTP de referencia. Las claves de "rutas" son las que forman parte
+# del contrato; esta sección facilita la prueba manual y la construcción del tester.
+metodos:
+  login: "POST"
+  yo: "GET"
+  ia_analizar: "POST"
+  ia_reporte: "GET"
+  ia_payload: "GET"
+  historia: "GET"
+  historia_pdf: "GET"
+  imagenes_paciente: "GET"
+  clusters: "GET"
+  remitir: "POST"
+  remisiones: "GET"
+  remision_aceptar: "PATCH"
+  contable_listar: "GET"
+  notificaciones: "GET"
+  notif_leer: "PATCH"
+  pendientes: "GET"
+  alertas: "GET"
+  alerta_reconocer: "PATCH"
+  tiempo_real: "GET"
+  fhir_observation: "POST"

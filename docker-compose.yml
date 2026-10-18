@@ -1,4 +1,25 @@
 services:
+  # PostgreSQL local de la aplicación (R05). La API clínica usa hoy Neon
+  # (PG_CONNECTION_STRING en back/pass.env); este servicio queda disponible
+  # como base local alternativa y no expone puertos al host.
+  postgres:
+    image: postgres:16-alpine
+    container_name: triaje-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${APP_DB_NAME:-triaje}
+      POSTGRES_USER: ${APP_DB_USER:-triaje}
+      POSTGRES_PASSWORD: ${APP_DB_PASSWORD:-triaje_local}
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 10
+    volumes:
+    - app_postgres_data:/var/lib/postgresql/data
   hapi-postgres:
     image: postgres:16-alpine
     container_name: triaje-hapi-postgres
@@ -138,6 +159,7 @@ services:
       retries: 5
       
 volumes:
+  app_postgres_data: null
   hapi_postgres_data: null
   orthanc_data: null
   mongodb_data: null

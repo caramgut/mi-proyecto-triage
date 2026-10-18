@@ -30,6 +30,7 @@ from routers.fhir_suscripcion import router as fhir_suscripcion_router, iniciar_
 from routers.ia import router as ia_router
 from routers.ia_reportes import router as ia_reportes_router
 from routers.alertas import router as alertas_router, iniciar_escalamiento
+from routers.papelera import router as papelera_router
 
 
 app = FastAPI(
@@ -85,6 +86,7 @@ app.include_router(fhir_suscripcion_router)
 app.include_router(ia_router)
 app.include_router(ia_reportes_router)
 app.include_router(alertas_router)
+app.include_router(papelera_router)
 
 # SISTEMA
 
