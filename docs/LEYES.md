@@ -1,0 +1,105 @@
+# Marco normativo y controles técnicos (R22)
+
+Este documento relaciona cada norma colombiana relevante con lo que el sistema hace para cumplirla. Es un documento **académico** y no constituye concepto jurídico.
+
+---
+
+## 1. Ley 1581 de 2012 — protección de datos personales
+
+Artículo 4: principios del tratamiento.
+
+| Principio (art. 4) | Qué exige | Control en el sistema |
+|---|---|---|
+| a) Legalidad | Tratar los datos conforme a la ley | Este mapa normativo; tratamiento solo para atención y gestión del hospital |
+| b) Finalidad | Finalidad legítima e informada | Los datos clínicos solo alimentan la atención, la historia clínica y el apoyo de IA; el payload a IA solo lleva los campos necesarios |
+| c) Libertad | Consentimiento previo, expreso e informado | **No implementado** como flujo en la aplicación (proyecto académico, pacientes ficticios). Un despliegue real necesitaría registrar el consentimiento |
+| d) Veracidad | Datos completos, exactos y actualizados | Historia clínica estructurada; correcciones con trazabilidad en `auditoria_cambios` |
+| e) Transparencia | El titular puede consultar sus datos | Rol `Paciente`: consulta su propia información |
+| f) Acceso y circulación restringida | Solo personas autorizadas | Control por rol (RBAC) en el API; el `Contable` no ve información clínica; el `Paciente` solo ve lo suyo; CORS restringido |
+| g) Seguridad | Medidas técnicas y administrativas | JWT (HS256, 60 min), contraseñas con argon2, bloqueo tras 3 intentos fallidos, cabeceras de seguridad y límite de peticiones en Nginx, auditoría, secretos fuera de Git |
+| h) Confidencialidad | Reserva de los datos | Seudonimización (HMAC-SHA256) del paciente en el payload a IA; el servicio `ml` exige token |
+
+## 2. Ley 2015 de 2020 — historia clínica electrónica interoperable (IHCE)
+
+| Artículo | Contenido | Control en el sistema |
+|---|---|---|
+| 1 | Regula la interoperabilidad de la historia clínica electrónica, para intercambiar datos clínicos relevantes | HAPI FHIR R4 como servidor de interoperabilidad, expuesto en `/fhir/` |
+| 2 | Define IHCE como registro integral y cronológico, seguro, fiable y disponible; define interoperabilidad | Historia clínica integrada (encuentros, observaciones, diagnósticos, notas, exámenes, prescripciones, remisiones) y recursos FHIR: Patient, Practitioner, Encounter, Observation, Condition, Medication, MedicationRequest, ServiceRequest, DiagnosticReport, DocumentReference, QuestionnaireResponse, Invoice |
+| 3 | Los prestadores registran y ponen a disposición los datos en la plataforma de interoperabilidad | El proyecto simula esa plataforma con HAPI FHIR. **No** se conecta a la plataforma nacional |
+| 5 | El prestador conserva la custodia de los registros en sus sistemas | Datos clínicos en PostgreSQL (Neon) bajo responsabilidad de la institución; copias en HAPI |
+
+> Limitación: la ley habla de historia **firmada digitalmente** por el profesional. El proyecto autentica con usuario y contraseña y audita las acciones, pero **no usa firma digital** en sentido legal.
+
+## 3. Resolución 866 de 2021 — datos clínicos relevantes para interoperabilidad
+
+Define el conjunto de **elementos de datos clínicos relevantes** que los prestadores deben intercambiar (art. 5): identificación del usuario, contacto con el servicio de salud (incluye la **prioridad de triaje**, vía de ingreso y diagnóstico inicial), tecnologías en salud y sus resultados (diagnósticos finales, remisiones). Los diagnósticos usan CIE-10.
+
+| Aspecto | Control en el sistema |
+|---|---|
+| Datos de identificación, contacto y resultados (art. 5) | Pacientes, encuentros (con nivel de triaje), diagnósticos con código CIE-10 (`Condition`), remisiones |
+| Codificación CIE-10 | Los diagnósticos usan `codigo_cie10` y el sistema ICD-10 en FHIR |
+| Corrección con trazabilidad (art. 10, par. 2) | Los cambios no sobrescriben sin rastro: `auditoria_cambios` guarda tabla, acción, datos anteriores y nuevos, usuario y fecha |
+| Uso solo para atención en salud (art. 22) | Los datos no se comercializan; la IA recibe solo el mínimo y seudonimizado |
+| Seguridad y privacidad (art. 19) y privacidad por diseño (art. 18) | Minimización y seudonimización del payload; RBAC; auditoría |
+
+> Aclaración: la resolución **no nombra HL7 FHIR**. Remite al "lenguaje común de intercambio" y al anexo técnico que administra el Ministerio de Salud. FHIR R4 fue una decisión de diseño del equipo; este proyecto no implementa el anexo técnico oficial de la resolución.
+
+## 4. Resolución 5596 de 2015 — criterios técnicos del triage
+
+Define el triage como la evaluación clínica breve que ordena la atención según la necesidad clínica y los recursos, y establece **cinco categorías (Triage I a V)**: la I requiere atención inmediata y la II dentro de 30 minutos. Dispone que **el triage no puede usarse para negar la atención de urgencias**.
+
+| Aspecto | Control en el sistema |
+|---|---|
+| Cinco niveles de triage | El sistema usa niveles 1–5 y los agrupa en tres categorías para el modelo (crítico 1–2, medio 3, no crítico 4–5) |
+| Triage que cambia con el estado del paciente | Los signos vitales se registran en cada encuentro; las alertas críticas persisten y se escalan al Admin si nadie las reconoce en 5 minutos |
+| El triage no niega atención | La IA solo apoya: **la decisión final es del profesional** y ningún paciente se rechaza por el resultado |
+
+## 5. Resolución 1995 de 1999 — historia clínica
+
+Establece normas para el manejo de la historia clínica. Artículos aplicados:
+
+| Artículo | Tema | Control en el sistema |
+|---|---|---|
+| 13 | Custodia de la historia clínica a cargo del prestador que la generó, que puede entregar copia al usuario | Los datos permanecen en la infraestructura del hospital; no se entregan a terceros |
+| 14 | Acceso a la historia: el usuario, el equipo de salud, las autoridades judiciales y de salud en los casos previstos por la ley y quienes la ley determine; solo para fines legalmente procedentes y manteniendo la reserva | Acceso por rol; el paciente ve la suya; auditoría de los accesos y cambios |
+| 16 | Seguridad del archivo: área restringida, acceso solo del personal autorizado, conservación de la integridad sin alteraciones | Autenticación, bloqueo de cuentas, contraseñas con hash, auditoría; el PDF de la historia solo se descarga con sesión y permiso |
+
+## 6. Resolución 3100 de 2019 — habilitación de servicios
+
+Define los procedimientos y condiciones de inscripción de prestadores y de habilitación de servicios de salud, incluidos los de urgencias, con estándares de historia clínica y registros. El proyecto no es un servicio habilitable; se toma como referencia de buenas prácticas.
+
+| Aspecto | Control en el sistema |
+|---|---|
+| Registro y trazabilidad de la atención | Encuentro con signos vitales, triaje, diagnósticos, notas, exámenes y prescripciones; auditoría integral de acciones |
+| Remisión a otro servicio | Módulo de remisiones con aceptación, rechazo y finalización |
+
+---
+
+## Controles transversales
+
+| Control | Dónde |
+|---|---|
+| Autenticación (JWT, 60 min) y roles (`Admin`, `Medico`, `Especialista`, `Paciente`, `Contable`) | `back/` |
+| Contraseñas con hash argon2 | `back/` |
+| Bloqueo tras 3 intentos fallidos; desbloqueo solo por `Admin`; evento `cuenta_bloqueada` | `back/auth/service.py` y `docs/EVENTOS.md` |
+| Auditoría: `auditoria_cambios` y `auth_log` | `back/squema_bd.sql` |
+| Eliminación lógica (soft delete) y restauración por `Admin` | R14; pantalla "Pacientes eliminados" |
+| Nginx: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, límite de 10 peticiones/s | `front/nginx.conf` |
+| Seudonimización y minimización para IA | `back/services/seudonimizacion.py` |
+| Secretos fuera de Git | `.gitignore`; solo se versionan `.env.example` y `back/example.pass.env` |
+
+## Limitaciones que debe conocer quien evalúe
+
+- No hay flujo de **consentimiento informado** ni gestión de derechos del titular (consulta, rectificación, supresión).
+- No hay **firma digital** de la historia clínica.
+- No se conecta a la plataforma nacional de interoperabilidad.
+- Todos los pacientes son ficticios; el hospital San Andrés de Tumaco es el escenario, no un cliente real.
+
+## Fuentes
+
+- [Ley 1581 de 2012, art. 4](http://www.secretariasenado.gov.co/senado/basedoc/ley_1581_2012.html) — Secretaría del Senado.
+- [Ley 2015 de 2020](https://normograma.supersalud.gov.co/compilacion/docs/ley_2015_2020.htm) — Normograma Supersalud.
+- [Resolución 866 de 2021](https://normativa.colpensiones.gov.co/compilacion/docs/resolucion_minsaludps_0866_2021.htm) — Normativa Colpensiones.
+- [Resolución 3100 de 2019](https://normograma.supersalud.gov.co/compilacion/docs/resolucion_minsaludps_3100_2019.htm) — Normograma Supersalud.
+- Resolución 5596 de 2015 (Ministerio de Salud y Protección Social), Diario Oficial 49.739, 28 de diciembre de 2015.
+- [Resolución 1995 de 1999](https://normograma.invima.gov.co/normograma/compilacion/docs/resolucion_minsalud_r1995_99.htm) — Normograma Invima; coincide con el [texto en PDF de la Unidad para las Víctimas](https://www.unidadvictimas.gov.co/wp-content/uploads/Documentos/resoluciones/RESOLUCI%c3%93N_1995_1999.pdf).
