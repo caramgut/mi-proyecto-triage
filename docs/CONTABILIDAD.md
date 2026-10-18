@@ -23,12 +23,12 @@ PostgreSQL conserva la información clínica y la auditoría; MongoDB conserva l
 ```
 
 Campos obligatorios para R09: `paciente_id`, `servicio`, `valor`, `fecha` y `estado_pago`.
-Las facturas de IA agregan `reporte_id`, que es único, para impedir doble facturación del mismo reporte.
+Las facturas de IA agregan `reporte_id`, que es único, para impedir doble facturación del mismo reporte. `numero_factura` también es único cuando existe. Las facturas manuales llevan `origen = "manual"` y las de IA `origen = "automatica"`.
 
 ## Permisos
 
-- `Admin`: crea, lista y consulta facturas.
-- `Contable`: crea, lista y consulta facturas.
+- `Admin`: crea, lista, consulta y actualiza el estado de pago de las facturas.
+- `Contable`: crea, lista, consulta y actualiza el estado de pago de las facturas.
 - `Medico`, `Especialista` y `Paciente`: reciben 403 en los endpoints contables.
 
 ## Endpoints
@@ -37,6 +37,7 @@ Las facturas de IA agregan `reporte_id`, que es único, para impedir doble factu
 - `POST /facturas`: crea una factura manual.
 - `GET /facturas`: lista las facturas Mongo.
 - `GET /facturas/{id}`: consulta una factura por ObjectId.
+- `PATCH /facturas/{id}/estado`: cambia `estado_pago` (404 si la factura no existe; 503 si MongoDB no responde).
 
 Ejemplo de factura manual:
 
@@ -70,6 +71,8 @@ MONGO_CONNECTION_STRING=mongodb://mongodb:27017/triaje
 
 No se versionan credenciales reales. Los secretos permanecen en `.env` local.
 
-
 ## Gestión del estado de pago
-El rol `Contable` y el `Admin` pueden cambiar `estado_pago` entre `pendiente`, `pagada` y `anulada`. La edición modifica únicamente el estado contable; no cambia el `reporte_id`, el origen automático/manual, el valor ni la historia clínica. Cada cambio queda en auditoría.
+
+El rol `Contable` y el `Admin` pueden cambiar `estado_pago` entre `pendiente`, `pagada` y `anulada` con `PATCH /facturas/{id}/estado`. La edición modifica únicamente el estado contable; no cambia el `reporte_id`, el origen automático/manual, el valor ni la historia clínica.
+
+Cada cambio guarda en la factura quién lo hizo y cuándo (`actualizada_por`, `updated_at`) y queda en la auditoría de PostgreSQL (`tabla_afectada = facturas`, `accion = EDITAR`, con el estado anterior y el nuevo).
