@@ -2,7 +2,7 @@
 
 ## 1. Resumen
 
-Las radiografías del sistema provienen de cuatro datasets públicos y reales (no sintéticos): FracAtlas, NIH ChestX-ray14 y BUU-LSPINE. Se cargaron 10 imágenes en el PACS (Orthanc), una por cada paciente sintético de la demostración. Cada imagen queda vinculada al encuentro y al examen de imagenología que solicitó el médico, y se visualiza desde la ficha del paciente.
+Las radiografías del sistema provienen de tres datasets públicos y reales (no sintéticos): FracAtlas, NIH ChestX-ray14 y BUU-LSPINE. Se cargaron 10 imágenes en el PACS (Orthanc), una por cada paciente sintético de la demostración. Cada imagen queda vinculada al encuentro y al examen de imagenología que solicitó el médico, y se visualiza desde la ficha del paciente.
 
 - Número de imágenes cargadas en Orthanc: 10
 - Tipo de estudio: radiografía convencional (tórax, extremidades y columna)
