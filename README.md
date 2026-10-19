@@ -4,6 +4,17 @@ Proyecto académico orientado al flujo de urgencias del Hospital San Andrés de 
 
 > La IA es un **apoyo a la decisión**. El profesional de salud conserva la decisión final del nivel de triaje.
 
+## Documentación
+
+| Documento | Contenido |
+|---|---|
+| [`docs/DATASETS.md`](docs/DATASETS.md) | Datasets tabular y de imágenes: fuentes, licencias, filtros, clusters, sintéticos |
+| [`docs/MODELO.md`](docs/MODELO.md) | Modelo de IA completo: regla de decisión, umbrales, métricas, comparación de modelos, sesgo por subgrupo, limitaciones e integración (R10, R12, R20) |
+| [`docs/EVENTOS.md`](docs/EVENTOS.md) | Catálogo de eventos en tiempo real y alertas |
+| [`docs/CONTABILIDAD.md`](docs/CONTABILIDAD.md) | Facturación en MongoDB |
+| [`docs/LEYES.md`](docs/LEYES.md) | Marco normativo y controles técnicos |
+| [`dataset_imagenes/`](dataset_imagenes/) | Imágenes DICOM cargadas en el PACS y su documentación |
+
 ## Arquitectura
 
 ```mermaid
@@ -66,7 +77,7 @@ flowchart TD
 
 ### Dataset tabular
 
-La base homologada combina KTAS y NHAMCS 2022. Después del preprocesamiento se usan 7.443 registros de entrenamiento y 1.861 de prueba. El clustering usa k-means con `k=5` y genera sintéticos dentro de cada grupo. Ver `docs/DATASETS.md` (fuentes, filtros, clusters, sintéticos) y `docs/MODELO.md` (modelo, umbrales, sesgo, limitaciones).
+La base homologada combina KTAS y NHAMCS 2022. Después del preprocesamiento se usan 7.443 registros de entrenamiento y 1.861 de prueba. El clustering usa k-means con `k=5` y genera sintéticos dentro de cada grupo. Ver [`docs/DATASETS.md`](docs/DATASETS.md) (fuentes, filtros, clusters, sintéticos) y [`docs/MODELO.md`](docs/MODELO.md) (cómo funciona el modelo).
 
 ### Modelo supervisado
 
@@ -81,13 +92,15 @@ Resultados de prueba almacenados en `back/preprocesamiento/salida_ia/metricas_mo
 
 Umbral de alerta: `P(crítico) >= 0.38` o red de seguridad (`SpO2 < 88 %` o `PAS < 90 mmHg`).
 
+Documentación completa del modelo (regla de decisión, métricas, matriz de confusión e intervalos de confianza): [`docs/MODELO.md`](docs/MODELO.md).
+
 ### Análisis de sesgo
 
-Se evaluó el comportamiento por fuente, sexo y grupo de edad. La principal diferencia observada está en el grupo de 18-39 años, con sensibilidad crítica menor (0.489) y mayor proporción de críticos clasificados como no críticos (0.205). Por ello el sistema no automatiza la decisión final: el profesional revisa el resultado y las reglas de seguridad clínica complementan al modelo.
+Se evaluó el comportamiento por sexo y grupo de edad. La principal diferencia observada está en el grupo de 18-39 años, con sensibilidad crítica menor (0.489) y mayor proporción de críticos clasificados como no críticos (0.205). Por ello el sistema no automatiza la decisión final: el profesional revisa el resultado y las reglas de seguridad clínica complementan al modelo. La tabla por subgrupo está en [`docs/MODELO.md`](docs/MODELO.md), sección 9.
 
 ## PACS e imágenes
 
-Orthanc funciona como PACS. Las imágenes se asocian a pacientes y se consultan desde su ficha. Las fuentes y el procedimiento de carga están en `docs/DATASETS.md`, sección 2.
+Orthanc funciona como PACS. Las imágenes se asocian a pacientes y se consultan desde su ficha. Los datasets de imágenes, su licencia, el número de imágenes cargadas y la trazabilidad por paciente están en `docs/DATASETS.md`, sección `## Imagen`.
 
 ## Interoperabilidad FHIR
 
@@ -154,21 +167,21 @@ Resumen; el detalle artículo por artículo y las limitaciones están en `docs/L
 | R03 | Seguridad (JWT, hash, CORS, cabeceras, límite de peticiones, secretos) | README, "Seguridad"; `docs/LEYES.md` |
 | R04 | URL pública (Cloudflare Tunnel) | README, "Despliegue" |
 | R05 | Servicios y arquitectura | README, "Arquitectura" |
-| R06 | PACS e imágenes | README, "PACS e imágenes"; `docs/DATASETS.md`, sección 2 |
-| R07 | Dataset, clusters y sintéticos | `docs/DATASETS.md`, secciones 1 y 1.7–1.8 |
+| R06 | PACS e imágenes | README, "PACS e imágenes"; [`docs/DATASETS.md`](docs/DATASETS.md), sección `## Imagen`; [`dataset_imagenes/`](dataset_imagenes/) |
+| R07 | Dataset, clusters y sintéticos | [`docs/DATASETS.md`](docs/DATASETS.md), sección `## Tabular` (clusters en 1.7 y sintéticos en 1.8) |
 | R08 | Remisiones | `docs/EVENTOS.md` |
 | R09 | Facturación en MongoDB | `docs/CONTABILIDAD.md` |
-| R10 | Reporte de IA con aprobación del profesional | `docs/MODELO.md`, secciones 1 y 8 |
+| R10 | Reporte de IA con aprobación del profesional | [`docs/MODELO.md`](docs/MODELO.md), sección 12 |
 | R11 | Historia clínica en PDF | README, "Historia clínica" |
-| R12 | Minimización y seudonimización del payload | `docs/MODELO.md`, sección 8 |
+| R12 | Minimización y seudonimización del payload | [`docs/MODELO.md`](docs/MODELO.md), sección 12 |
 | R13 | Auditoría | README, "Seguridad"; `docs/LEYES.md` |
-| R14 | Eliminación lógica y restauración | `docs/LEYES.md`, "Controles transversales" |
+| R14 | Eliminación lógica y restauración. El médico solo elimina pacientes que él creó; el Admin los ve en "Pacientes eliminados" y los restaura | `docs/LEYES.md`, "Controles transversales" |
 | R15 | Interoperabilidad FHIR R4 | README, "Interoperabilidad FHIR" |
 | R16 | Interfaz web | README, "Arquitectura" |
 | R17 | Tiempo real (SSE) | README, "Sistema reactivo"; `docs/EVENTOS.md` |
 | R18 | Bandeja persistente y pendientes | `docs/EVENTOS.md` |
 | R19 | Reacciones automáticas | `docs/EVENTOS.md`; `docs/CONTABILIDAD.md` |
-| R20 | Alertas críticas, reconocimiento y escalamiento | `docs/EVENTOS.md`, "Escalamiento"; `docs/MODELO.md`, sección 3 |
+| R20 | Alertas críticas, reconocimiento y escalamiento. La alerta persiste hasta que se reconoce; si no, escala sola a los Admin (pantalla "Alertas escaladas"); no hay botón de escalamiento manual | [`docs/EVENTOS.md`](docs/EVENTOS.md), "Escalamiento"; [`docs/MODELO.md`](docs/MODELO.md), sección 5 |
 | R21 | Subscription FHIR | README, "Interoperabilidad FHIR"; `docs/EVENTOS.md` (`observacion_fhir`) |
 | R22 | Documentación y marco normativo | README; `docs/LEYES.md` |
 
