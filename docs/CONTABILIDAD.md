@@ -76,3 +76,7 @@ No se versionan credenciales reales. Los secretos permanecen en `.env` local.
 El rol `Contable` y el `Admin` pueden cambiar `estado_pago` entre `pendiente`, `pagada` y `anulada` con `PATCH /facturas/{id}/estado`. La edición modifica únicamente el estado contable; no cambia el `reporte_id`, el origen automático/manual, el valor ni la historia clínica.
 
 Cada cambio guarda en la factura quién lo hizo y cuándo (`actualizada_por`, `updated_at`) y queda en la auditoría de PostgreSQL (`tabla_afectada = facturas`, `accion = EDITAR`, con el estado anterior y el nuevo).
+
+## Documentos relacionados
+
+[`EVENTOS.md`](EVENTOS.md) (`factura_ia_creada`) · [`MODELO.md`](MODELO.md) (reporte de IA que genera la factura) · [`LEYES.md`](LEYES.md) · [README](../README.md)
