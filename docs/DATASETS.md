@@ -4,7 +4,7 @@ Este documento describe los dos conjuntos de datos del sistema: el **tabular** (
 
 ---
 
-## 1. Dataset tabular (triaje)
+## Tabular
 
 ### 1.1 Fuentes
 
@@ -133,19 +133,64 @@ El endpoint `GET /ia/clusters` devuelve `[{cluster, nombre, descripcion, n_reale
 
 ---
 
-## 2. Dataset de imágenes (PACS) — R06
+## Imagen
 
-Las imágenes médicas se almacenan en **Orthanc** (PACS, formato DICOM) y se vinculan a pacientes y encuentros del sistema.
+Las radiografías del sistema provienen de **tres datasets públicos y reales** (no sintéticos): FracAtlas, NIH ChestX-ray14 y BUU-LSPINE. Se cargaron **10 imágenes** en el PACS (Orthanc), una por cada paciente de la demostración. Cada imagen queda vinculada al encuentro y al examen de imagenología que solicitó el médico, y se visualiza desde la ficha del paciente. El detalle completo y los archivos DICOM están en la carpeta [`dataset_imagenes/`](../dataset_imagenes/).
 
-**Cómo se cargan.** `POST /pacs/estudios` recibe `id_paciente`, `id_encuentro`, `id_examen` y el archivo DICOM (el front limita a 20 MB, `.dcm`). El estudio queda en `estudios_imagenes`, enlazado al paciente. `GET /pacientes/{documento}/imagenes` lista los estudios del paciente, y hay endpoints para estudios, instancias y vista previa. Si una imagen de origen no está en DICOM, se convierte a DICOM antes de cargarla.
+### 2.1 Datasets utilizados
 
-**Pacientes preparados.** `back/scripts/pacientes_rx_creados.txt` lista diez pacientes creados para radiografías (3 de tórax y 7 de extremidades o columna).
+| Dataset | Fuente | Licencia o términos | Región | Imágenes cargadas |
+|---|---|---|---|---|
+| FracAtlas | Abedeen et al. (2026). *FracAtlas: A Dataset for Fracture Classification, Localization and Segmentation of Musculoskeletal Radiographs* (v7). Figshare. https://doi.org/10.6084/m9.figshare.22363012.v7 | CC BY 4.0 (atribución) | Mano, hombro, pierna y cadera | 6 |
+| NIH ChestX-ray14 | Wang et al. (2017). *ChestX-ray8*. CVPR, 3462–3471. Descarga: https://nihcc.app.box.com/v/ChestXray-NIHCC | Uso público del NIH Clinical Center; atribución al artículo y al instituto | Tórax | 3 |
+| BUU-LSPINE | Faculty of Informatics, Burapha University. *Burapha Spine Dataset* (v0.1). https://services.informatics.buu.ac.th/spine | Acuerdo de usuario final: no identificar a los participantes, reconocer al dataset y no usar el nombre de la universidad como aval | Columna lumbar | 1 |
+| **Total** | | | | **10** |
 
-**Privacidad.** Los estudios se asocian a pacientes ficticios del sistema; las etiquetas DICOM no deben contener nombres ni identificadores de personas reales.
+Tamaño de los datasets completos: FracAtlas, 4.083 radiografías (717 con fractura); NIH ChestX-ray14, 112.120 radiografías frontales de 30.805 pacientes; BUU-LSPINE, muestra de 400 pares de imágenes (vista AP y lateral) de la versión 0.1.
+
+### 2.2 Por qué responden al problema clínico
+
+El sistema apoya el triaje en urgencias. Los casos de la demostración son motivos de consulta frecuentes en los que el médico solicita una radiografía: traumatismos musculoesqueléticos (muñeca, mano, tobillo, hombro, rodilla, cadera y columna lumbar) y cuadros torácicos o respiratorios. Se usan varios datasets porque ninguno cubre todas las regiones: FracAtlas aporta fracturas con anotaciones de especialistas, NIH ChestX-ray14 aporta hallazgos como neumonía, neumotórax y enfisema, y BUU-LSPINE aporta columna lumbar en dos vistas.
+
+### 2.3 Preparación y privacidad
+
+Los datasets entregan JPG o PNG, no DICOM. Cada imagen se convirtió con un script en Python (PIL y pydicom): escala de grises de 8 bits, identificadores únicos DICOM (UID) propios para estudio, serie e imagen, y modalidad DX como *Secondary Capture*. Se asignan identificadores sintéticos (PatientName `ANONYMOUS`, PatientID `DEMO001`, `DEMO002`, etc.) y no se importaron metadatos del archivo de origen. Los archivos están en `dataset_imagenes/`.
+
+### 2.4 Trazabilidad por paciente
+
+| Paciente (documento) | Examen solicitado | Dataset de origen |
+|---|---|---|
+| 1200001001 | Radiografía de muñeca derecha | FracAtlas (mano) |
+| 1200001002 | Radiografía de tobillo izquierdo | FracAtlas (pierna) |
+| 1200001003 | Radiografía de tórax | NIH ChestX-ray14 |
+| 1200001004 | Radiografía de hombro derecho | FracAtlas (hombro) |
+| 1200001005 | Radiografía de rodilla izquierda | FracAtlas (pierna) |
+| 1200001006 | Radiografía de pelvis y cadera | FracAtlas (cadera) |
+| 1200001007 | Radiografía de mano derecha | FracAtlas (mano) |
+| 1200001008 | Radiografía de tórax | NIH ChestX-ray14 |
+| 1200001009 | Radiografía de tórax | NIH ChestX-ray14 |
+| 1200001010 | Radiografía de columna lumbar | BUU-LSPINE |
+
+### 2.5 Cómo se cargan
+
+`POST /pacs/estudios` recibe `id_paciente`, `id_encuentro`, `id_examen` y el archivo DICOM (el front limita a 20 MB, `.dcm`). El estudio queda en `estudios_imagenes`, enlazado al paciente. `GET /pacientes/{documento}/imagenes` lista los estudios del paciente, y hay endpoints para estudios, instancias y vista previa.
+
+### 2.6 Limitaciones
+
+1. Cada imagen pertenece a una persona real del dataset de origen, no al paciente ficticio al que se asocia en el sistema: la asignación es demostrativa.
+2. Las imágenes de origen son JPG o PNG ya comprimidas y se convirtieron a DICOM de 8 bits, sin los metadatos originales (como el espaciado de píxel). No son aptas para uso diagnóstico.
+3. Las etiquetas de NIH ChestX-ray14 se extrajeron automáticamente de informes radiológicos, con una precisión esperada superior al 90 % según sus autores.
+4. BUU-LSPINE está orientado a la listesis lumbar y no al trauma agudo; alguna imagen puede no mostrar el hallazgo del caso ficticio.
+5. Las poblaciones son de Bangladesh, Estados Unidos y Tailandia; no representan a la población colombiana.
 
 ---
 
 ## Fuentes
 
 - Moon S-H, Shim JL, Park K-S, Park C-S. *Triage accuracy and causes of mistriage using the Korean Triage and Acuity Scale.* PLOS ONE 2019;14(9):e0216972. https://doi.org/10.1371/journal.pone.0216972
+- Datasets de imágenes: ver tabla de la sección Imagen.
 - NCHS/CDC. *NHAMCS 2022 – Emergency Department public use data file* y documentación. https://cdc.gov/nchs/nhamcs/documentation/index.html
+
+## Documentos relacionados
+
+[`MODELO.md`](MODELO.md) · [`LEYES.md`](LEYES.md) · [README](../README.md)
