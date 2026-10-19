@@ -89,3 +89,7 @@ Paciente y Contable no reciben ninguno de estos eventos, ni ven ni reconocen ale
 - **Mecanismo:** un hilo de la API revisa cada 30 s las alertas `activa` sin escalar y más antiguas que el umbral (`FOR UPDATE SKIP LOCKED`, para no chocar con un reconocimiento simultáneo).
 - **A quién:** a todos los usuarios con rol Admin. Desde ese momento cualquier médico puede reconocerla, además del destinatario original.
 - **Auditoría:** `ESCALAR_ALERTA`, con `origen = 'SISTEMA'` y sin usuario, porque nadie la ejecuta.
+
+## Documentos relacionados
+
+[`CONTABILIDAD.md`](CONTABILIDAD.md) (factura automática de IA) · [`MODELO.md`](MODELO.md) (análisis de IA y alertas) · [`LEYES.md`](LEYES.md) · [README](../README.md)
