@@ -103,3 +103,7 @@ Define los procedimientos y condiciones de inscripción de prestadores y de habi
 - [Resolución 3100 de 2019](https://normograma.supersalud.gov.co/compilacion/docs/resolucion_minsaludps_3100_2019.htm) — Normograma Supersalud.
 - Resolución 5596 de 2015 (Ministerio de Salud y Protección Social), Diario Oficial 49.739, 28 de diciembre de 2015.
 - [Resolución 1995 de 1999](https://normograma.invima.gov.co/normograma/compilacion/docs/resolucion_minsalud_r1995_99.htm) — Normograma Invima; coincide con el [texto en PDF de la Unidad para las Víctimas](https://www.unidadvictimas.gov.co/wp-content/uploads/Documentos/resoluciones/RESOLUCI%c3%93N_1995_1999.pdf).
+
+## Documentos relacionados
+
+[`MODELO.md`](MODELO.md) (seudonimización del payload) · [`EVENTOS.md`](EVENTOS.md) · [`CONTABILIDAD.md`](CONTABILIDAD.md) · [`DATASETS.md`](DATASETS.md) · [README](../README.md)
