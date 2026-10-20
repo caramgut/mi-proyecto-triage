@@ -1,165 +1,385 @@
+# Sección principal donde se definen todos los contenedores (servicios)
 services:
-  # PostgreSQL local de la aplicación (R05). La API clínica usa hoy Neon
-  # (PG_CONNECTION_STRING en back/pass.env); este servicio queda disponible
-  # como base local alternativa y no expone puertos al host.
+
+  # Servicio de base de datos PostgreSQL para la aplicación principal
   postgres:
+
+    # Imagen oficial de PostgreSQL versión 16 basada en Alpine Linux
     image: postgres:16-alpine
+
+    # Nombre personalizado que tendrá el contenedor
     container_name: triaje-postgres
+
+    # Reinicia el contenedor automáticamente excepto si fue detenido manualmente
     restart: unless-stopped
+
+    # Variables de entorno utilizadas al iniciar PostgreSQL
     environment:
+
+      # Nombre de la base de datos.
+      # Si APP_DB_NAME no existe, usa "triaje"
       POSTGRES_DB: ${APP_DB_NAME:-triaje}
+
+      # Usuario administrador de la base de datos.
+      # Si APP_DB_USER no existe, usa "triaje"
       POSTGRES_USER: ${APP_DB_USER:-triaje}
+
+      # Contraseña del usuario de la base.
+      # Si APP_DB_PASSWORD no existe, usa "triaje_local"
       POSTGRES_PASSWORD: ${APP_DB_PASSWORD:-triaje_local}
+
+    # Verificación automática del estado del servicio
     healthcheck:
+
+      # Comando ejecutado para comprobar que PostgreSQL responde
       test:
       - CMD-SHELL
+
+      # pg_isready valida que la base esté lista para conexiones
       - pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB
+
+      # Ejecuta la verificación cada 10 segundos
       interval: 10s
+
+      # Espera máximo 5 segundos por respuesta
       timeout: 5s
+
+      # Espera inicial antes de comenzar verificaciones
       start_period: 10s
+
+      # Número máximo de intentos fallidos
       retries: 10
+
+    # Persistencia de datos mediante volumen Docker
     volumes:
+
+    # Los datos de PostgreSQL se almacenan aquí
     - app_postgres_data:/var/lib/postgresql/data
+
+
+  # Segunda instancia PostgreSQL exclusiva para HAPI-FHIR
   hapi-postgres:
+
     image: postgres:16-alpine
     container_name: triaje-hapi-postgres
     restart: unless-stopped
+
     environment:
+
+      # Nombre de la BD de HAPI FHIR
       POSTGRES_DB: ${HAPI_DB_NAME}
+
+      # Usuario de la BD
       POSTGRES_USER: ${HAPI_DB_USER}
+
+      # Contraseña de la BD
       POSTGRES_PASSWORD: ${HAPI_DB_PASSWORD}
+
+    # Comprobación de salud del servicio
     healthcheck:
       test:
       - CMD-SHELL
       - pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB
+
       interval: 10s
       timeout: 5s
       start_period: 10s
       retries: 10
+
+    # Persistencia de datos de HAPI
     volumes:
     - hapi_postgres_data:/var/lib/postgresql/data
+
+
+  # Servidor FHIR para gestión de recursos clínicos
   hapi-fhir:
+
+    # Imagen oficial de HAPI FHIR
     image: hapiproject/hapi:latest
+
+    # Nombre del contenedor
     container_name: triaje-hapi-fhir
+
     restart: unless-stopped
+
     environment:
+
+      # URL JDBC para conectar HAPI a PostgreSQL
       SPRING_DATASOURCE_URL: jdbc:postgresql://hapi-postgres:5432/${HAPI_DB_NAME}
+
+      # Usuario de la base
       SPRING_DATASOURCE_USERNAME: ${HAPI_DB_USER}
+
+      # Contraseña de la base
       SPRING_DATASOURCE_PASSWORD: ${HAPI_DB_PASSWORD}
+
+      # Driver JDBC para PostgreSQL
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+
+      # Dialecto específico para PostgreSQL en HAPI
       HIBERNATE_DIALECT: ca.uhn.fhir.jpa.model.dialect.HapiFhirPostgresDialect
+
+      # Versión FHIR utilizada
       HAPI_FHIR_FHIR_VERSION: R4
+
+      # Habilita documentación OpenAPI (Swagger)
       HAPI_FHIR_OPENAPI_ENABLED: 'true'
-      HAPI_FHIR_SUBSCRIPTION_RESTHOOK_ENABLED: 'true'   # R21: activa las Subscription rest-hook
+
+      # Permite notificaciones por Subscription RestHook
+      HAPI_FHIR_SUBSCRIPTION_RESTHOOK_ENABLED: 'true'
+
+    # Exposición de puertos
     ports:
+
+    # Host:Contenedor
     - 8080:8080
+
+    # No inicia hasta que PostgreSQL esté saludable
     depends_on:
       hapi-postgres:
         condition: service_healthy
+
+
+  # Sistema PACS para almacenamiento de imágenes médicas DICOM
   orthanc:
+
     image: orthancteam/orthanc:latest
     container_name: triaje-orthanc
     restart: unless-stopped
+
     environment:
-      ORTHANC_JSON: "{\n  \"Name\": \"Triaje Hospitalario PACS\",\n  \"DicomAet\"\
-        : \"TRIAJEPACS\",\n  \"RemoteAccessAllowed\": true,\n  \"AuthenticationEnabled\"\
-        : true,\n  \"RegisteredUsers\": {\n    \"${ORTHANC_USERNAME:-orthanc}\": \"\
-        ${ORTHANC_PASSWORD:-orthanc}\"\n  }\n}\n"
+
+      # Configuración JSON de Orthanc
+      ORTHANC_JSON: "{ ... }"
+
+      # Dentro de este JSON:
+      # Name → nombre del servidor PACS
+      # DicomAet → identificador DICOM
+      # RemoteAccessAllowed → acceso remoto permitido
+      # AuthenticationEnabled → autenticación activa
+      # RegisteredUsers → usuarios autorizados
+
     ports:
+
+    # Interfaz web administrativa
     - 8042:8042
+
+    # Puerto DICOM estándar
     - 4242:4242
+
     volumes:
+
+    # Persistencia de imágenes médicas
     - orthanc_data:/var/lib/orthanc/db
+
+
+  # Base de datos documental MongoDB
   mongodb:
+
     image: mongo:7
     container_name: triaje-mongodb
     restart: unless-stopped
+
     environment:
+
+      # Base creada automáticamente
       MONGO_INITDB_DATABASE: ${MONGO_DB_NAME:-triaje}
+
     healthcheck:
+
+      # Ejecuta un ping contra MongoDB
       test:
       - CMD
       - mongosh
       - --quiet
       - --eval
       - db.adminCommand('ping').ok
+
       interval: 10s
       timeout: 5s
       start_period: 10s
       retries: 10
+
     volumes:
+
+    # Guarda los documentos de MongoDB
     - mongodb_data:/data/db
+
+
+  # Backend principal de la aplicación
   api:
+
     build:
+
+      # Carpeta donde está el código fuente
       context: ./back
+
+      # Dockerfile a utilizar
       dockerfile: Dockerfile
+
     container_name: triaje-api
     restart: unless-stopped
+
+    # Carga variables desde archivo externo
     env_file:
     - ./back/pass.env
+
     environment:
+
+      # URL interna del servidor FHIR
       HAPI_FHIR_URL: http://hapi-fhir:8080/fhir
+
+      # URL interna de Orthanc
       ORTHANC_URL: http://orthanc:8042
+
+      # Credenciales de Orthanc
       ORTHANC_USERNAME: ${ORTHANC_USERNAME:-orthanc}
       ORTHANC_PASSWORD: ${ORTHANC_PASSWORD:-orthanc}
+
+      # Cadena de conexión a MongoDB
       MONGO_CONNECTION_STRING: mongodb://mongodb:27017/${MONGO_DB_NAME:-triaje}
+
+      # Endpoint para webhooks FHIR
       FHIR_HOOK_URL: http://api:8000/fhir-hook
+
+      # URL interna del servicio de Machine Learning
       ML_URL: http://ml:8001
+
+      # Token compartido para comunicación segura
       ML_SERVICE_TOKEN: ${ML_SERVICE_TOKEN}
+
+      # Clave usada para seudonimización de pacientes
       SEUDONIMO_SECRETO: ${SEUDONIMO_SECRETO}
+
+      # Minutos para escalar una alerta
       ALERTA_ESCALAR_MINUTOS: ${ALERTA_ESCALAR_MINUTOS:-5}
+
     ports:
+
+    # API accesible desde el host
     - 8000:8000
+
     volumes:
+
+    # Comparte las historias clínicas con el contenedor
     - ./historias_clinicas:/app/historias_clinicas
+
     depends_on:
+
+      # Espera a HAPI
       hapi-fhir:
         condition: service_started
+
+      # Espera a Orthanc
       orthanc:
         condition: service_started
+
+      # Espera a MongoDB saludable
       mongodb:
         condition: service_healthy
+
+      # Espera a ML saludable
       ml:
         condition: service_healthy
+
+
+  # Frontend web del sistema
   frontend:
+
     build:
+
+      # Código fuente frontend
       context: ./front
+
       dockerfile: Dockerfile
+
     container_name: triaje-frontend
+
     restart: unless-stopped
+
     ports:
+
+    # Puerto web visible para usuarios
     - 5500:80
+
     depends_on:
+
+    # Requiere que la API exista
     - api
+
+
+  # Túnel Cloudflare para acceso externo sin abrir puertos públicos
   cloudflared:
+
     image: cloudflare/cloudflared:latest
+
     container_name: triaje-cloudflared
+
     restart: unless-stopped
+
     command:
+
+    # Ejecuta un túnel
     - tunnel
+
+    # Desactiva actualizaciones automáticas
     - --no-autoupdate
+
+    # URL a publicar
     - --url
+
+    # Expone el frontend
     - http://frontend:80
+
     depends_on:
     - frontend
 
+
+  # Servicio de Inteligencia Artificial
   ml:
+
     build:
+
+      # Código fuente del modelo ML
       context: ./ml
+
       dockerfile: Dockerfile
+
     container_name: triaje-ml
+
     restart: unless-stopped
+
     environment:
+
+      # Token de autenticación
       ML_SERVICE_TOKEN: ${ML_SERVICE_TOKEN}
+
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+
+      # Comprueba que el endpoint /health responde
+      test:
+      - CMD
+      - python
+      - -c
+      - "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"
+
       interval: 10s
       timeout: 5s
       start_period: 30s
       retries: 5
-      
+
+
+# Definición global de volúmenes persistentes
 volumes:
-  app_postgres_data: null
-  hapi_postgres_data: null
-  orthanc_data: null
-  mongodb_data: null
+
+  # Datos PostgreSQL principal
+  app_postgres_data:
+
+  # Datos PostgreSQL de HAPI
+  hapi_postgres_data:
+
+  # Datos PACS Orthanc
+  orthanc_data:
+
+  # Datos MongoDB
+  mongodb_data:
