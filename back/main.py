@@ -240,15 +240,15 @@ app.include_router(papelera_router)
 @app.on_event("startup")
 async def _iniciar_bus_eventos():
 
-    # Obtiene el loop asíncrono actualmente activo
+    # Obtiene el loop asíncrono actualmente activo para que sse mande eventos
     # y lo registra para el sistema de eventos.
     configurar_loop(asyncio.get_running_loop())
 
-    # Registra las suscripciones FHIR.
+    # Registra las suscripciones FHIR recibiendo notificaciones cuando cmabian datos de paciente.
     iniciar_registro_suscripcion()
 
     # Inicia el proceso automático de escalamiento
-    # de alertas clínicas.
+    # de alertas clínicas al admin.
     #
     # Según el comentario del proyecto:
     # revisa cada 30 segundos las alertas
